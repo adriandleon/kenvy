@@ -1,0 +1,20 @@
+# kenvy.toml — Kenvy configuration contract
+
+[properties.api_key]
+type = "String"
+
+[properties.base_url]
+type = "String"
+default = "https://api.example.com"
+
+[properties.max_retries]
+type = "Int"
+default = "3"
+
+[properties.debug_enabled]
+type = "Boolean"
+default = "false"
+
+[properties.session_timeout_ms]
+type = "Long"
+default = "30000"

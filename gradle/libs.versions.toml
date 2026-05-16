@@ -1,0 +1,17 @@
+[versions]
+kotlin = "2.1.20"
+gradle = "9.4.1"
+ktoml = "0.5.2"
+junit-jupiter = "5.10.2"
+junit-platform = "1.10.2"
+plugin-publish = "2.0.0"
+
+[libraries]
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+ktoml-core = { group = "com.akuleshov7", name = "ktoml-core-jvm", version.ref = "ktoml" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit-jupiter" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit-platform" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
