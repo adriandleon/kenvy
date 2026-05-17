@@ -6,7 +6,7 @@ guarantee.
 
 ## Public release is not yet on the Gradle Plugin Portal
 
-`kenvy-plugin/build.gradle.kts` applies `com.gradle.plugin-publish` 2.0.0 and
+`kenvy-plugin/build.gradle.kts` applies `com.gradle.plugin-publish` 2.1.1 and
 is wired for Gradle Plugin Portal publication. The local staged artifact
 (published via `./gradlew :kenvy-plugin:publishToMavenLocal`) is verified and a
 fresh external consumer can apply the plugin without any repo-local shortcuts.

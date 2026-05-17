@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish Gradle plugin
+    runs-on: macos-latest
+    environment: release
+    env:
+      GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+      GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Resolve release version
+        id: release-version
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+
+          if [[ "${tag}" != v* ]]; then
+            echo "Release tag must start with 'v'. Got '${tag}'."
+            exit 1
+          fi
+
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9][A-Za-z0-9.-]*)?$ ]]; then
+            echo "Release tag '${tag}' does not contain a valid release version."
+            exit 1
+          fi
+
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Run release test gate
+        run: ./gradlew :kenvy-plugin:test :kenvy-plugin:functionalTest -PkenvyVersion=${{ steps.release-version.outputs.version }}
+
+      - name: Validate Gradle Plugin Portal publication
+        run: ./gradlew :kenvy-plugin:publishPlugins --validate-only -PkenvyVersion=${{ steps.release-version.outputs.version }}
+
+      - name: Publish to Gradle Plugin Portal
+        run: ./gradlew :kenvy-plugin:publishPlugins -PkenvyVersion=${{ steps.release-version.outputs.version }}
