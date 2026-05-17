@@ -12,9 +12,9 @@ is wired for Gradle Plugin Portal publication. The local staged artifact
 fresh external consumer can apply the plugin without any repo-local shortcuts.
 
 The plugin ID `io.github.adriandleon.kenvy` does **not** yet resolve from the
-Gradle Plugin Portal or Maven Central. Public Portal publication requires a
-fixed release version (not a `SNAPSHOT` version) and Portal credentials. Until
-that publish runs, external consumers must configure `mavenLocal()` in
+Gradle Plugin Portal or Maven Central. Public Portal publication requires
+Portal credentials and the final publish command. Until that publish runs,
+external consumers must configure `mavenLocal()` in
 `pluginManagement.repositories` and run `publishToMavenLocal` from this
 repository first. See [release checklist](release-checklist.md) for the
 remaining pre-launch steps.

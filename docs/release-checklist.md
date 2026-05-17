@@ -13,15 +13,15 @@ fresh external consumer can apply without any repo-local shortcuts.
 
 The **Test gate** and **Consumer smoke gate** pass for local staged validation.
 The **Publication gate** passes for local Maven staging only. Public Gradle
-Plugin Portal release remains blocked until the version changes from
-`0.1.7-SNAPSHOT` to a fixed version and Portal credentials
-(`GRADLE_PUBLISH_KEY` / `GRADLE_PUBLISH_SECRET`) are supplied.
+Plugin Portal release remains blocked until Portal credentials
+(`GRADLE_PUBLISH_KEY` / `GRADLE_PUBLISH_SECRET`) are supplied and the final
+publish command succeeds.
 
 <!-- prettier-ignore -->
 > [!NOTE]
 > `publishToMavenLocal` and the external consumer smoke test pass as of
-> 2026-05-09. `publishPlugins --validate-only` currently rejects the SNAPSHOT
-> version, so public Portal release is still a remaining gate.
+> 2026-05-09. Re-run `publishPlugins --validate-only` after every metadata
+> change before public Portal publication.
 
 ## Test gate — blocking
 
@@ -86,7 +86,7 @@ which automatically applies `maven-publish`. Publication metadata is configured:
 
 - Group: `io.github.adriandleon.kenvy`
 - Artifact: `kenvy-plugin`
-- Version: `0.1.7-SNAPSHOT`
+- Version: `0.1.0`
 - Plugin ID: `io.github.adriandleon.kenvy`
 - Repository: `https://github.com/adriandleon/kenvy`
 
@@ -99,20 +99,18 @@ which automatically applies `maven-publish`. Publication metadata is configured:
 This produces the implementation JAR and the Gradle plugin marker artifact:
 
 ```
-~/.m2/repository/io/github/adriandleon/kenvy/kenvy-plugin/0.1.7-SNAPSHOT/
-~/.m2/repository/io/github/adriandleon/kenvy/io.github.adriandleon.kenvy.gradle.plugin/0.1.7-SNAPSHOT/
+~/.m2/repository/io/github/adriandleon/kenvy/kenvy-plugin/0.1.0/
+~/.m2/repository/io/github/adriandleon/kenvy/io.github.adriandleon.kenvy.gradle.plugin/0.1.0/
 ```
 
-**Gradle Plugin Portal validation command (attempted 2026-05-09):**
+**Gradle Plugin Portal validation command:**
 
 ```sh
 ./gradlew :kenvy-plugin:publishPlugins --validate-only
 ```
 
-Result: this exits non-zero because the Plugin Portal rejects SNAPSHOT versions.
-Change `version` in `kenvy-plugin/build.gradle.kts` from `0.1.7-SNAPSHOT` to a
-fixed version such as `0.1.7`, then re-run this command before public
-publication.
+Run this command before public publication and keep the output as release
+evidence.
 
 **Credentials required for Portal publication (not committed):**
 
@@ -131,7 +129,7 @@ Or via environment: `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET`.
 environment variables. Not required for `publishToMavenLocal`.
 
 **Gate passes for local Maven staging.** Public Portal release is still blocked
-by the SNAPSHOT version and missing Portal credentials.
+by missing Portal credentials and the final publish command.
 
 ## Consumer smoke gate — passing
 
@@ -143,7 +141,7 @@ Verified 2026-05-09 with a fresh project outside this repository using no
 ```
 kenvy-consumer-smoke-20260509/
 ├── settings.gradle.kts   # pluginManagement { repositories { mavenLocal() … } }
-├── build.gradle.kts      # id("io.github.adriandleon.kenvy") version "0.1.7-SNAPSHOT"
+├── build.gradle.kts      # id("io.github.adriandleon.kenvy") version "0.1.0"
 └── kenvy.toml            # [properties.base_url] type = "String" …
 ```
 
@@ -232,10 +230,8 @@ These checks improve quality but do not block the release by themselves.
 
 Local staged validation is complete. Before public release:
 
-1. Change `version` in `kenvy-plugin/build.gradle.kts` from `0.1.7-SNAPSHOT`
-   to a fixed release version such as `0.1.7`.
-2. Set `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET` (do not commit these).
-3. Run `./gradlew :kenvy-plugin:publishPlugins` (omit `--validate-only` for the
+1. Set `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET` (do not commit these).
+2. Run `./gradlew :kenvy-plugin:publishPlugins` (omit `--validate-only` for the
    real publish).
-4. Re-run the external consumer smoke project using the Portal-published
+3. Re-run the external consumer smoke project using the Portal-published
    coordinate to confirm end-to-end resolution.

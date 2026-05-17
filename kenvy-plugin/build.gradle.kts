@@ -16,7 +16,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 }
 
 group = "io.github.adriandleon.kenvy"
-version = "0.1.7-SNAPSHOT"
+version = "0.1.0"
 
 // Functional test source set — implementation begins in Story 1.2
 val functionalTest by sourceSets.creating

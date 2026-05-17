@@ -7,7 +7,7 @@ properties, and target-specific generated code for the KMP targets you declare.
 This repository contains the plugin implementation and its publication wiring
 for the Gradle Plugin Portal. A local staged artifact is verified and an
 external consumer smoke test passes. The plugin is not yet on the Gradle Plugin
-Portal; public release requires a fixed version and Portal credentials.
+Portal; public release requires Portal credentials and final publication.
 
 ## What you get
 
@@ -209,9 +209,9 @@ limits.
 The core plugin implementation is in place, all tests pass, publication wiring
 is configured via `com.gradle.plugin-publish` 2.0.0, and a fresh external
 consumer smoke test passes against the locally staged artifact. Public release
-to the Gradle Plugin Portal requires a fixed version (not SNAPSHOT) and Portal
-credentials. See [release checklist](docs/release-checklist.md) for the
-remaining pre-launch steps.
+to the Gradle Plugin Portal requires Portal credentials and final publication.
+See [release checklist](docs/release-checklist.md) for the remaining
+pre-launch steps.
 
 ## Next steps
 
