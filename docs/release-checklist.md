@@ -8,7 +8,7 @@ is ahead of its release packaging. Each section is labelled **blocking** or
 ## Current status
 
 The repository has passing unit and functional tests, publication wiring via
-`com.gradle.plugin-publish` 2.0.0, and a verified local staged artifact that a
+`com.gradle.plugin-publish` 2.1.1, and a verified local staged artifact that a
 fresh external consumer can apply without any repo-local shortcuts.
 
 The **Test gate** and **Consumer smoke gate** pass for local staged validation.
@@ -81,14 +81,16 @@ unsupported diagnostics timing, or contradicts tested task names or behaviors.
 
 ## Publication gate — partial pass (local staged)
 
-`kenvy-plugin/build.gradle.kts` now applies `com.gradle.plugin-publish` 2.0.0,
+`kenvy-plugin/build.gradle.kts` now applies `com.gradle.plugin-publish` 2.1.1,
 which automatically applies `maven-publish`. Publication metadata is configured:
 
 - Group: `io.github.adriandleon.kenvy`
 - Artifact: `kenvy-plugin`
-- Version: `0.1.0`
+- Version: `0.1.1-SNAPSHOT` by default, or the value of
+  `-PkenvyVersion=<version>` during release
 - Plugin ID: `io.github.adriandleon.kenvy`
 - Repository: `https://github.com/adriandleon/kenvy`
+- Gradle feature compatibility: Configuration Cache supported
 
 **Local staged publication command (verified 2026-05-09):**
 
@@ -126,10 +128,29 @@ Or via environment: `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET`.
 
 **Signing (opt-in):** Configure `signing.key` and `signing.password` in
 `~/.gradle/gradle.properties`, or set `SIGNING_KEY` and `SIGNING_PASSWORD`
-environment variables. Not required for `publishToMavenLocal`.
+environment variables if you want signed Portal artifacts. Not required for
+`publishToMavenLocal`.
 
 **Gate passes for local Maven staging.** Public Portal release is still blocked
 by missing Portal credentials and the final publish command.
+
+## Automated release workflow
+
+The public repository includes a GitHub Actions release workflow that publishes
+the Gradle plugin when you publish a GitHub Release. The release tag must start
+with `v`. The workflow strips the leading `v` and passes the remaining version
+to Gradle with `-PkenvyVersion=<version>`. For example, tag `v0.1.0`
+publishes version `0.1.0`.
+
+Before creating the GitHub Release, configure the `release` GitHub environment
+with these secrets:
+
+- `GRADLE_PUBLISH_KEY`
+- `GRADLE_PUBLISH_SECRET`
+
+The workflow checks out the release tag, validates the tag format, runs the full
+test gate on macOS with the release version, runs
+`publishPlugins --validate-only`, and then runs `publishPlugins`.
 
 ## Consumer smoke gate — passing
 
@@ -231,7 +252,8 @@ These checks improve quality but do not block the release by themselves.
 Local staged validation is complete. Before public release:
 
 1. Set `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET` (do not commit these).
-2. Run `./gradlew :kenvy-plugin:publishPlugins` (omit `--validate-only` for the
-   real publish).
-3. Re-run the external consumer smoke project using the Portal-published
+2. Create and publish a GitHub Release with a semantic version tag, such as
+   `v0.1.0`.
+3. Wait for the `Release` workflow to pass.
+4. Re-run the external consumer smoke project using the Portal-published
    coordinate to confirm end-to-end resolution.

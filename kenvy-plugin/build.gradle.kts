@@ -1,7 +1,9 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     `kotlin-dsl`
     signing
-    id("com.gradle.plugin-publish") version "2.0.0"
+    id("com.gradle.plugin-publish") version "2.1.1"
 }
 
 java {
@@ -16,7 +18,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 }
 
 group = "io.github.adriandleon.kenvy"
-version = "0.1.0"
+version = providers.gradleProperty("kenvyVersion")
+    .orElse("0.1.1-SNAPSHOT")
+    .get()
 
 // Functional test source set — implementation begins in Story 1.2
 val functionalTest by sourceSets.creating
@@ -32,12 +36,17 @@ gradlePlugin {
             displayName = "Kenvy KMP Configuration Plugin"
             description = "Modern environment configuration for Kotlin Multiplatform"
             tags.set(listOf("kotlin", "multiplatform", "configuration", "environment", "kmp"))
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }
 
 // Signing is opt-in: only activated when in-memory PGP credentials are present.
-// Required for Gradle Plugin Portal publication; not required for publishToMavenLocal.
+// Useful for signed Portal artifacts; not required for publishToMavenLocal.
 val signingKey = findProperty("signing.key") as String? ?: System.getenv("SIGNING_KEY")
 val signingPassword = findProperty("signing.password") as String? ?: System.getenv("SIGNING_PASSWORD")
 if (signingKey != null && signingPassword != null) {

@@ -4,7 +4,7 @@ gradle = "9.4.1"
 ktoml = "0.5.2"
 junit-jupiter = "5.10.2"
 junit-platform = "1.10.2"
-plugin-publish = "2.0.0"
+plugin-publish = "2.1.1"
 
 [libraries]
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
