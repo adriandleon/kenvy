@@ -7,8 +7,10 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.*
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 
+@DisableCachingByDefault(because = "Merges into local.properties, which may contain developer-local secret values.")
 abstract class MergeKenvyTask : DefaultTask() {
 
     @get:InputFiles
