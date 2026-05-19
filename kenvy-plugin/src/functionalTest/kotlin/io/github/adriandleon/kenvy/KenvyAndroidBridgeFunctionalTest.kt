@@ -29,6 +29,7 @@ class KenvyAndroidBridgeFunctionalTest {
         extraKenvyConfig: String = "",
         extraKotlinTargets: String = "",
         jvmSourceContent: String? = null,
+        environment: Map<String, String>? = null,
         arguments: List<String>
     ): GradleRunner {
         File(projectDir, "settings.gradle.kts").writeText(
@@ -87,10 +88,11 @@ class KenvyAndroidBridgeFunctionalTest {
             File(jvmSourceDir, "UseJvmKenvy.kt").writeText(jvmSourceContent)
         }
 
-        return GradleRunner.create()
+        val runner = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
             .withArguments(arguments)
+        return if (environment != null) runner.withEnvironment(System.getenv() + environment) else runner
     }
 
     @Test fun `generateKenvyAndroid writes androidMain source with Android overrides`() {
@@ -317,5 +319,104 @@ class KenvyAndroidBridgeFunctionalTest {
         assertNoExpectActualBetaWarning(releaseResult.output)
         assertTrue(generated.readText().contains("actual val apiKey: String = \"android-release-local\""))
         assertTrue(generated.readText().contains("actual object Kenvy"))
+    }
+
+    @Test fun `android debug resolves from KENVY_API_KEY_ANDROID_DEBUG env`() {
+        val result = setupAndroidProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            androidSourceContent = """
+                package com.example.test
+                fun androidValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            environment = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_ANDROID" to "android-value",
+                "KENVY_API_KEY_ANDROID_DEBUG" to "android-debug-env-value"
+            ),
+            arguments = listOf("compileDebugKotlinAndroid")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyAndroid")?.outcome)
+
+        val generated = File(projectDir, "build/generated/kenvy/androidMain/kotlin/com/example/test/Kenvy.kt")
+        assertTrue(generated.readText().contains("actual val apiKey: String = \"android-debug-env-value\""))
+    }
+
+    @Test fun `android release resolves from KENVY_API_KEY_ANDROID_RELEASE env`() {
+        val result = setupAndroidProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            androidSourceContent = """
+                package com.example.test
+                fun androidValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            environment = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_ANDROID_RELEASE" to "android-release-env-value"
+            ),
+            arguments = listOf("assembleRelease")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyAndroid")?.outcome)
+
+        val generated = File(projectDir, "build/generated/kenvy/androidMain/kotlin/com/example/test/Kenvy.kt")
+        assertTrue(generated.readText().contains("actual val apiKey: String = \"android-release-env-value\""))
+    }
+
+    @Test fun `android scoped env beats scoped local properties`() {
+        File(projectDir, "local.properties").writeText(
+            """
+            api_key=local-generic
+            api_key.android=local-android
+            api_key.android.debug=local-android-debug
+            """.trimIndent() + "\n"
+        )
+
+        val result = setupAndroidProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            androidSourceContent = """
+                package com.example.test
+                fun androidValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            environment = mapOf("KENVY_API_KEY_ANDROID_DEBUG" to "android-debug-env-wins"),
+            arguments = listOf("compileDebugKotlinAndroid")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyAndroid")?.outcome)
+
+        val generated = File(projectDir, "build/generated/kenvy/androidMain/kotlin/com/example/test/Kenvy.kt")
+        assertTrue(generated.readText().contains("actual val apiKey: String = \"android-debug-env-wins\""))
+    }
+
+    @Test fun `generic KENVY_API_KEY fallback when no android scoped env matches`() {
+        val result = setupAndroidProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            androidSourceContent = """
+                package com.example.test
+                fun androidValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            environment = mapOf("KENVY_API_KEY" to "generic-env-value"),
+            arguments = listOf("compileDebugKotlinAndroid")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyAndroid")?.outcome)
+
+        val generated = File(projectDir, "build/generated/kenvy/androidMain/kotlin/com/example/test/Kenvy.kt")
+        assertTrue(generated.readText().contains("actual val apiKey: String = \"generic-env-value\""))
     }
 }
