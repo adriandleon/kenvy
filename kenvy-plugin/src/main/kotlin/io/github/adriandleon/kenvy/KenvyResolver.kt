@@ -16,14 +16,8 @@ internal object KenvyResolver {
 
     fun toScopedEnvVarNames(propertyName: String, platform: String?, variant: String?): List<String> {
         val generic = toEnvVarName(propertyName)
-        val normalizedPlatform = platform?.trim()
-            ?.replace(Regex("[^A-Za-z0-9]+"), "_")
-            ?.uppercase(Locale.ROOT)
-            ?.takeIf { it.isNotBlank() }
-        val normalizedVariant = variant?.trim()
-            ?.replace(Regex("[^A-Za-z0-9]+"), "_")
-            ?.uppercase(Locale.ROOT)
-            ?.takeIf { it.isNotBlank() }
+        val normalizedPlatform = platform.normalizeEnvSegment()
+        val normalizedVariant = variant.normalizeEnvSegment()
         return buildList {
             add(generic)
             if (normalizedPlatform != null) {
@@ -34,6 +28,12 @@ internal object KenvyResolver {
             }
         }
     }
+
+    private fun String?.normalizeEnvSegment(): String? =
+        this?.trim()
+            ?.replace(Regex("[^A-Za-z0-9]+"), "_")
+            ?.uppercase(Locale.ROOT)
+            ?.takeIf { it.isNotBlank() }
 
     fun validateEnvironmentNameCollisions(properties: List<KenvyProperty>) {
         val byEnvName = properties.groupBy { toEnvVarName(it.name) }
