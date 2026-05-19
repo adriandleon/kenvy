@@ -191,6 +191,8 @@ private fun Project.registerGenerateKenvyTask(
             environmentValues.set(
                 buildEnvironmentValuesProvider(
                     extension = extension,
+                    platformProvider = platformProvider,
+                    variantProvider = variantProvider,
                     legacyUnprefixedEnvironmentOverrides = legacyUnprefixedEnvironmentOverrides,
                     projectPath = path,
                     projectDir = projectDir
@@ -201,11 +203,15 @@ private fun Project.registerGenerateKenvyTask(
 
 private fun Project.buildEnvironmentValuesProvider(
     extension: KenvyExtension,
+    platformProvider: Provider<String>,
+    variantProvider: Provider<String>,
     legacyUnprefixedEnvironmentOverrides: Provider<Boolean>,
     projectPath: String? = null,
     projectDir: java.io.File? = null
 ): Provider<Map<String, String>> =
     providers.provider {
+        val platform = platformProvider.orNull?.takeIf { it.isNotBlank() }
+        val variant = variantProvider.orNull?.takeIf { it.isNotBlank() }
         val contract = KenvyParser.parseContract(
             file = extension.configFile.get().asFile,
             gradleProjectPath = projectPath,
@@ -215,7 +221,7 @@ private fun Project.buildEnvironmentValuesProvider(
         val legacyOptIn = legacyUnprefixedEnvironmentOverrides.getOrElse(false)
         val environmentNames = buildSet {
             contract.properties.forEach { prop ->
-                add(KenvyResolver.toEnvVarName(prop.name))
+                addAll(KenvyResolver.toScopedEnvVarNames(prop.name, platform, variant))
                 val legacyEnvName = KenvyResolver.toLegacyEnvVarName(prop.name)
                 if (legacyOptIn || legacyEnvName in KNOWN_UNSAFE_LEGACY_ENVIRONMENT_NAMES) {
                     add(legacyEnvName)
