@@ -656,4 +656,87 @@ class KenvyResolutionFunctionalTest {
 
         assertEquals(TaskOutcome.UP_TO_DATE, result.task(":generateKenvy")?.outcome)
     }
+
+    @Test fun `platform scoped env resolves when platform is configured on the task`() {
+        val result = setupProject(
+            extraConfig = """
+                kenvy {
+                    platform.set("android")
+                }
+            """.trimIndent(),
+            environment = mapOf("KENVY_API_KEY_ANDROID" to "android-env-value")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvy")?.outcome)
+        assertTrue(generatedContent().contains("val apiKey: String = \"android-env-value\""))
+    }
+
+    @Test fun `platform+variant scoped env resolves when platform and variant are configured`() {
+        val result = setupProject(
+            extraConfig = """
+                kenvy {
+                    platform.set("android")
+                    variant.set("debug")
+                }
+            """.trimIndent(),
+            environment = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_ANDROID" to "android-value",
+                "KENVY_API_KEY_ANDROID_DEBUG" to "android-debug-env-value"
+            )
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvy")?.outcome)
+        assertTrue(generatedContent().contains("val apiKey: String = \"android-debug-env-value\""))
+    }
+
+    @Test fun `generic KENVY env remains fallback when no scoped env matches configured platform`() {
+        val result = setupProject(
+            extraConfig = """
+                kenvy {
+                    platform.set("android")
+                    variant.set("debug")
+                }
+            """.trimIndent(),
+            environment = mapOf("KENVY_API_KEY" to "generic-fallback-value")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvy")?.outcome)
+        assertTrue(generatedContent().contains("val apiKey: String = \"generic-fallback-value\""))
+    }
+
+    @Test fun `scoped env beats scoped local properties`() {
+        val result = setupProject(
+            localPropertiesContent = """
+                api_key=local-generic
+                api_key.android=local-android
+                api_key.android.debug=local-android-debug
+            """.trimIndent(),
+            extraConfig = """
+                kenvy {
+                    platform.set("android")
+                    variant.set("debug")
+                }
+            """.trimIndent(),
+            environment = mapOf("KENVY_API_KEY_ANDROID" to "android-env-wins")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvy")?.outcome)
+        assertTrue(generatedContent().contains("val apiKey: String = \"android-env-wins\""))
+    }
+
+    @Test fun `blank scoped env does not suppress local properties`() {
+        val result = setupProject(
+            localPropertiesContent = "api_key=local-value",
+            extraConfig = """
+                kenvy {
+                    platform.set("android")
+                }
+            """.trimIndent(),
+            environment = mapOf("KENVY_API_KEY_ANDROID" to "")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvy")?.outcome)
+        assertTrue(generatedContent().contains("val apiKey: String = \"local-value\""))
+    }
 }
