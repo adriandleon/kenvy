@@ -593,4 +593,169 @@ class KenvyResolverTest {
         assertEquals("", result.resolvedValue)
         assertEquals(ResolutionSource.EXTERNAL_PROVIDER, result.source)
     }
+
+    // Group A — toScopedEnvVarNames output
+
+    @Test fun `toScopedEnvVarNames returns only generic when no platform given`() {
+        assertEquals(
+            listOf("KENVY_API_KEY"),
+            KenvyResolver.toScopedEnvVarNames("api_key", null, null)
+        )
+    }
+
+    @Test fun `toScopedEnvVarNames returns generic and platform when only platform is given`() {
+        assertEquals(
+            listOf("KENVY_API_KEY", "KENVY_API_KEY_ANDROID"),
+            KenvyResolver.toScopedEnvVarNames("api_key", "android", null)
+        )
+    }
+
+    @Test fun `toScopedEnvVarNames returns all three when platform and variant are given`() {
+        assertEquals(
+            listOf("KENVY_API_KEY", "KENVY_API_KEY_ANDROID", "KENVY_API_KEY_ANDROID_DEBUG"),
+            KenvyResolver.toScopedEnvVarNames("api_key", "android", "debug")
+        )
+    }
+
+    @Test fun `toScopedEnvVarNames normalizes platform and variant segments`() {
+        assertEquals(
+            listOf("KENVY_BASE_URL", "KENVY_BASE_URL_IOS", "KENVY_BASE_URL_IOS_RELEASE"),
+            KenvyResolver.toScopedEnvVarNames("base-url", "ios", "release")
+        )
+    }
+
+    @Test fun `toScopedEnvVarNames ignores blank platform`() {
+        assertEquals(
+            listOf("KENVY_API_KEY"),
+            KenvyResolver.toScopedEnvVarNames("api_key", "  ", "debug")
+        )
+    }
+
+    // Group B — precedence tests
+
+    @Test fun `platform scoped env beats generic env`() {
+        val result = resolve(
+            apiKeyProp,
+            platform = "android",
+            env = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_ANDROID" to "android-value"
+            )
+        )
+        assertEquals("android-value", result.resolvedValue)
+        assertEquals(ResolutionSource.ENVIRONMENT, result.source)
+    }
+
+    @Test fun `platform+variant scoped env beats platform env and generic env`() {
+        val result = resolve(
+            apiKeyProp,
+            platform = "android",
+            variant = "debug",
+            env = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_ANDROID" to "android-value",
+                "KENVY_API_KEY_ANDROID_DEBUG" to "android-debug-value"
+            )
+        )
+        assertEquals("android-debug-value", result.resolvedValue)
+        assertEquals(ResolutionSource.ENVIRONMENT, result.source)
+    }
+
+    @Test fun `platform env beats generic env when variant env is absent`() {
+        val result = resolve(
+            apiKeyProp,
+            platform = "android",
+            variant = "debug",
+            env = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_ANDROID" to "android-value"
+            )
+        )
+        assertEquals("android-value", result.resolvedValue)
+        assertEquals(ResolutionSource.ENVIRONMENT, result.source)
+    }
+
+    @Test fun `blank platform scoped env does not suppress nonblank generic env`() {
+        val result = resolve(
+            apiKeyProp,
+            platform = "android",
+            env = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_ANDROID" to ""
+            )
+        )
+        assertEquals("generic-value", result.resolvedValue)
+        assertEquals(ResolutionSource.ENVIRONMENT, result.source)
+    }
+
+    @Test fun `blank variant scoped env does not suppress nonblank platform or generic env`() {
+        val result = resolve(
+            apiKeyProp,
+            platform = "android",
+            variant = "debug",
+            env = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_ANDROID" to "android-value",
+                "KENVY_API_KEY_ANDROID_DEBUG" to ""
+            )
+        )
+        assertEquals("android-value", result.resolvedValue)
+        assertEquals(ResolutionSource.ENVIRONMENT, result.source)
+    }
+
+    @Test fun `scoped env value beats scoped local properties`() {
+        val result = resolve(
+            apiKeyProp,
+            platform = "android",
+            variant = "debug",
+            localProps = mapOf(
+                "api_key" to "local-generic",
+                "api_key.android" to "local-android",
+                "api_key.android.debug" to "local-android-debug"
+            ),
+            env = mapOf("KENVY_API_KEY_ANDROID" to "android-env-value")
+        )
+        assertEquals("android-env-value", result.resolvedValue)
+        assertEquals(ResolutionSource.ENVIRONMENT, result.source)
+    }
+
+    @Test fun `generic env fallback when no scoped env matches current platform`() {
+        val result = resolve(
+            apiKeyProp,
+            platform = "ios",
+            variant = "debug",
+            env = mapOf("KENVY_API_KEY" to "generic-env-value")
+        )
+        assertEquals("generic-env-value", result.resolvedValue)
+        assertEquals(ResolutionSource.ENVIRONMENT, result.source)
+    }
+
+    // Group C — provider short-circuit with scoped env
+
+    @Test fun `contract resolve does not call provider when scoped env overrides provider backed property`() {
+        var providerCalled = false
+        val contract = ParsedKenvyContract(
+            properties = listOf(apiKeyProp),
+            externalProviderRequests = listOf(KenvyExternalProviderRequest("api_key", "ci-vault"))
+        )
+
+        val result = KenvyResolver.resolve(
+            contract = contract,
+            platform = "android",
+            variant = "debug",
+            localProperties = emptyMap(),
+            externalProviderResolver = KenvyExternalProviderResolver {
+                providerCalled = true
+                mapOf("api_key" to "provider-value")
+            },
+            externalProviderTimeout = Duration.ofMillis(50),
+            timeoutGateFactory = { timeout -> KenvyExternalProviderTimeoutGate(timeout) }
+        ) { envName ->
+            if (envName == "KENVY_API_KEY_ANDROID_DEBUG") "scoped-env-value" else null
+        }.single()
+
+        assertEquals("scoped-env-value", result.resolvedValue)
+        assertEquals(ResolutionSource.ENVIRONMENT, result.source)
+        assertFalse(providerCalled)
+    }
 }
