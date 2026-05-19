@@ -366,3 +366,69 @@ default. If you need to preserve that legacy behavior temporarily, opt in with
 Use [getting started](getting-started.md) for setup details and
 [release checklist](release-checklist.md) when you want to validate the project
 for external launch.
+
+## CI usage with scoped environment variables
+
+Kenvy is CI-agnostic. It reads only environment variables that are visible to
+the Gradle process. CI systems can expose secrets as environment variables
+using the platform/variant naming convention to supply different values for
+different build targets.
+
+Kenvy does not integrate directly with CI providers. The examples below show
+the environment variable mapping pattern; adapt the secret names and step
+syntax to your CI system.
+
+### GitHub Actions
+
+```yaml
+- name: Build Android debug
+  env:
+    KENVY_API_KEY_ANDROID_DEBUG: ${{ secrets.KENVY_API_KEY_ANDROID_DEBUG }}
+  run: ./gradlew compileDebugKotlinAndroid
+
+- name: Build iOS release
+  env:
+    KENVY_API_KEY_IOS_RELEASE: ${{ secrets.KENVY_API_KEY_IOS_RELEASE }}
+  run: ./gradlew shared:generateKenvyIos -PkenvyVariant=release
+```
+
+Store secrets under the same name in GitHub → Repository → Settings →
+Secrets. GitHub Actions maps `secrets.*` into step environment variables via
+the `env:` block.
+
+### Bitrise
+
+```bash
+envman add --key KENVY_API_KEY_ANDROID_RELEASE \
+           --value "$KENVY_API_KEY_ANDROID_RELEASE"
+./gradlew assembleRelease
+```
+
+Use Bitrise Secrets (not regular Env Vars) so values are protected in pull
+request builds.
+
+### Jenkins
+
+```groovy
+withCredentials([
+  string(credentialsId: 'kenvy-api-key-ios-release',
+         variable: 'KENVY_API_KEY_IOS_RELEASE')
+]) {
+  sh './gradlew shared:generateKenvyIos -PkenvyVariant=release'
+}
+```
+
+`withCredentials` scopes each binding to the enclosed block and never logs
+the value.
+
+### Resolution fallback
+
+Kenvy checks candidates from least to most specific and uses the last
+non-blank match. If `KENVY_API_KEY_ANDROID_DEBUG` is blank or absent,
+Kenvy falls back to `KENVY_API_KEY_ANDROID`, then to `KENVY_API_KEY`. You
+can set a generic fallback secret in every CI job and override it per
+platform/variant only where needed.
+
+Do not generate or write `local.properties` in CI as the primary secret
+delivery path. File-based delivery is a compatibility escape hatch; the
+`KENVY_` environment variable pattern is the recommended CI path.
