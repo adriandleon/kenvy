@@ -14,6 +14,27 @@ internal object KenvyResolver {
             .replace(Regex("[^A-Za-z0-9]+"), "_")
             .uppercase(Locale.ROOT)
 
+    fun toScopedEnvVarNames(propertyName: String, platform: String?, variant: String?): List<String> {
+        val generic = toEnvVarName(propertyName)
+        val normalizedPlatform = platform?.trim()
+            ?.replace(Regex("[^A-Za-z0-9]+"), "_")
+            ?.uppercase(Locale.ROOT)
+            ?.takeIf { it.isNotBlank() }
+        val normalizedVariant = variant?.trim()
+            ?.replace(Regex("[^A-Za-z0-9]+"), "_")
+            ?.uppercase(Locale.ROOT)
+            ?.takeIf { it.isNotBlank() }
+        return buildList {
+            add(generic)
+            if (normalizedPlatform != null) {
+                add("${generic}_$normalizedPlatform")
+                if (normalizedVariant != null) {
+                    add("${generic}_${normalizedPlatform}_$normalizedVariant")
+                }
+            }
+        }
+    }
+
     fun validateEnvironmentNameCollisions(properties: List<KenvyProperty>) {
         val byEnvName = properties.groupBy { toEnvVarName(it.name) }
         val collisions = byEnvName.entries
@@ -115,6 +136,8 @@ internal object KenvyResolver {
     ): ResolvedKenvyValue {
         resolveEnvironmentValue(
             property = property,
+            platform = platform,
+            variant = variant,
             legacyUnprefixedEnvironmentOverrides = legacyUnprefixedEnvironmentOverrides,
             environmentProvider = environmentProvider
         )?.let { environmentValue ->
@@ -192,6 +215,8 @@ private fun hasEnvironmentOrLocalOverride(
 ): Boolean {
     val envValue = resolveEnvironmentValue(
         property = property,
+        platform = platform,
+        variant = variant,
         legacyUnprefixedEnvironmentOverrides = legacyUnprefixedEnvironmentOverrides,
         environmentProvider = environmentProvider
     )
@@ -235,14 +260,19 @@ private fun resolveScopedLocalValue(
 
 private fun resolveEnvironmentValue(
     property: KenvyProperty,
+    platform: String?,
+    variant: String?,
     legacyUnprefixedEnvironmentOverrides: Boolean,
     environmentProvider: (String) -> String?
 ): String? {
-    val safeEnvValue = environmentProvider(KenvyResolver.toEnvVarName(property.name))?.takeIf { it.isNotBlank() }
+    val candidates = KenvyResolver.toScopedEnvVarNames(property.name, platform, variant)
+    // Last non-blank wins (higher specificity wins); blank more-specific does not mask non-blank generic
+    val safeEnvValue = candidates
+        .mapNotNull { name -> environmentProvider(name)?.takeIf { it.isNotBlank() } }
+        .lastOrNull()
     if (safeEnvValue != null) return safeEnvValue
 
     if (!legacyUnprefixedEnvironmentOverrides) return null
-
     return environmentProvider(KenvyResolver.toLegacyEnvVarName(property.name))?.takeIf { it.isNotBlank() }
 }
 
