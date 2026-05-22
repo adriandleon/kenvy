@@ -81,6 +81,7 @@ val functionalTestTask = tasks.register<Test>("functionalTest") {
     testClassesDirs = functionalTest.output.classesDirs
     classpath = functionalTest.runtimeClasspath
     useJUnitPlatform()
+    filter { isFailOnNoMatchingTests = true }
 }
 functionalTestTask.configure { shouldRunAfter(tasks.test) }
 tasks.check { dependsOn(functionalTestTask) }

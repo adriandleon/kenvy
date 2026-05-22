@@ -9,9 +9,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
-  test-linux:
-    name: Unit tests (Linux)
+  validation:
+    name: Validation (Ubuntu)
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -26,11 +30,48 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run unit tests
-        run: ./gradlew :kenvy-plugin:test
+      - name: Run validation
+        run: ./gradlew :kenvy-plugin:test :kenvy-plugin:validatePlugins
 
-  test-macos:
-    name: Functional tests (macOS)
+  functional-linux:
+    name: Functional tests (Ubuntu)
+    if: github.event_name == 'pull_request'
+    needs: [validation]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Linux-safe functional tests
+        run: >
+          ./gradlew :kenvy-plugin:functionalTest
+          --tests '*KenvyActionableErrorFunctionalTest'
+          --tests '*KenvyAndroidBridgeFunctionalTest'
+          --tests '*KenvyCodegenFunctionalTest'
+          --tests '*KenvyExampleFunctionalTest'
+          --tests '*KenvyGitIgnoreFunctionalTest'
+          --tests '*KenvyGradleIsolationFunctionalTest'
+          --tests '*KenvyLocalPropertiesFunctionalTest'
+          --tests '*KenvyMergeFunctionalTest'
+          --tests '*KenvyMetadataFunctionalTest'
+          --tests '*KenvyParserFunctionalTest'
+          --tests '*KenvyPerformanceFunctionalTest'
+          --tests '*KenvyResolutionFunctionalTest'
+          --tests '*KenvySensitiveFunctionalTest'
+
+  functional-macos:
+    name: iOS functional tests (macOS)
+    if: github.event_name == 'pull_request'
+    needs: [validation]
     runs-on: macos-latest
     steps:
       - name: Check out repository
@@ -45,5 +86,5 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run tests
-        run: ./gradlew :kenvy-plugin:test :kenvy-plugin:functionalTest
+      - name: Run iOS functional tests
+        run: ./gradlew :kenvy-plugin:functionalTest --tests '*KenvyIosBridgeFunctionalTest'
