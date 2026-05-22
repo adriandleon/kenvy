@@ -153,6 +153,8 @@ Kenvy uses the same precedence order everywhere. Later entries win.
 8. Matching unprefixed environment variable only when you opt in with
    `kenvy { legacyUnprefixedEnvironmentOverrides.set(true) }`
 9. Matching `KENVY_<NORMALIZED_NAME>` environment variable
+10. Matching `KENVY_<NORMALIZED_NAME>_<NORMALIZED_PLATFORM>` environment variable
+11. Matching `KENVY_<NORMALIZED_NAME>_<NORMALIZED_PLATFORM>_<NORMALIZED_VARIANT>` environment variable
 
 Use `local.properties` for developer-local values and `KENVY_` environment
 variables for CI or ephemeral overrides.
@@ -172,7 +174,12 @@ files are merged the same way as unscoped keys.
 Kenvy maps property names to environment variables by uppercasing and replacing
 non-alphanumeric separators with underscores, then prefixes the result with
 `KENVY_`. For example, `api_key` and `api-key` both map to
-`KENVY_API_KEY`.
+`KENVY_API_KEY`. Platform and variant segments use the same normalization.
+For platform `android` and variant `debug`, Kenvy looks up `KENVY_API_KEY`,
+then `KENVY_API_KEY_ANDROID`, then `KENVY_API_KEY_ANDROID_DEBUG`, and uses
+the most specific non-blank value. This lets CI matrix builds set
+`KENVY_API_KEY_ANDROID_DEBUG` and `KENVY_API_KEY_IOS_RELEASE` as separate
+secrets without changing generated code.
 
 Kenvy ignores unprefixed variables such as `API_KEY` by default. This avoids
 accidental collisions with ambient build variables such as `PLATFORM_NAME`.
@@ -206,6 +213,13 @@ base_url = "https://android-debug.example.com"
 
 You can also set the platform and variant manually when you generate common
 output outside platform-specific tasks.
+
+Android target generation can infer a single variant from common
+variant-bearing tasks such as `compileDebugKotlinAndroid`, `testDebugUnitTest`,
+`connectedDebugAndroidTest`, `assembleRelease`, and `bundleRelease`. Lifecycle
+tasks such as `build` and `check` do not imply one variant, and multi-variant
+invocations such as `assembleDebug assembleRelease` require an explicit
+`kenvy.variant` value.
 
 ```kotlin
 kenvy {

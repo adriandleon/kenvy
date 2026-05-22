@@ -19,6 +19,7 @@ class KenvyIosBridgeFunctionalTest {
         iosSourceContent: String,
         extraKenvyConfig: String = "",
         extraKotlinTargets: String = "",
+        environment: Map<String, String>? = null,
         arguments: List<String>
     ): GradleRunner {
         File(projectDir, "settings.gradle.kts").writeText(
@@ -64,10 +65,11 @@ class KenvyIosBridgeFunctionalTest {
             File(iosSourceDir, "UseIosKenvy.kt").writeText(iosSourceContent)
         }
 
-        return GradleRunner.create()
+        val runner = GradleRunner.create()
             .withProjectDir(projectDir)
             .withPluginClasspath()
             .withArguments(arguments)
+        return if (environment != null) runner.withEnvironment(kenvyScopedTestEnvironment(environment)) else runner
     }
 
     @Test fun `generateKenvyIos writes shared iosMain source when iosMain source set exists`() {
@@ -667,5 +669,130 @@ class KenvyIosBridgeFunctionalTest {
         val content = headers.readText()
         assertTrue(content.contains("Kenvy"))
         assertTrue(content.contains("apiKey"))
+    }
+
+    @Test fun `iOS debug resolves from KENVY_API_KEY_IOS_DEBUG env`() {
+        val result = setupIosProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            iosSourceContent = """
+                package com.example.test
+                fun iosValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            extraKenvyConfig = """
+                kenvy {
+                    variant.set("debug")
+                }
+            """.trimIndent(),
+            environment = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_IOS" to "ios-value",
+                "KENVY_API_KEY_IOS_DEBUG" to "ios-debug-env-value"
+            ),
+            arguments = listOf("compileKotlinIosArm64", "compileKotlinIosSimulatorArm64")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyIosArm64")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyIosSimulatorArm64")?.outcome)
+
+        listOf("iosArm64Main", "iosSimulatorArm64Main").forEach { sourceSetName ->
+            val generated = File(projectDir, "build/generated/kenvy/$sourceSetName/kotlin/com/example/test/Kenvy.kt")
+            assertTrue(generated.readText().contains("actual val apiKey: String = \"ios-debug-env-value\""))
+        }
+    }
+
+    @Test fun `iOS release resolves from KENVY_API_KEY_IOS_RELEASE env`() {
+        val result = setupIosProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            iosSourceContent = """
+                package com.example.test
+                fun iosValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            extraKenvyConfig = """
+                kenvy {
+                    variant.set("release")
+                }
+            """.trimIndent(),
+            environment = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_IOS_RELEASE" to "ios-release-env-value"
+            ),
+            arguments = listOf("compileKotlinIosArm64", "compileKotlinIosSimulatorArm64")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyIosArm64")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyIosSimulatorArm64")?.outcome)
+
+        listOf("iosArm64Main", "iosSimulatorArm64Main").forEach { sourceSetName ->
+            val generated = File(projectDir, "build/generated/kenvy/$sourceSetName/kotlin/com/example/test/Kenvy.kt")
+            assertTrue(generated.readText().contains("actual val apiKey: String = \"ios-release-env-value\""))
+        }
+    }
+
+    @Test fun `generic KENVY_API_KEY fallback when no iOS scoped env matches`() {
+        val result = setupIosProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            iosSourceContent = """
+                package com.example.test
+                fun iosValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            extraKenvyConfig = """
+                kenvy {
+                    variant.set("debug")
+                }
+            """.trimIndent(),
+            environment = mapOf("KENVY_API_KEY" to "generic-env-fallback"),
+            arguments = listOf("compileKotlinIosArm64")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyIosArm64")?.outcome)
+
+        val generated = File(projectDir, "build/generated/kenvy/iosArm64Main/kotlin/com/example/test/Kenvy.kt")
+        assertTrue(generated.readText().contains("actual val apiKey: String = \"generic-env-fallback\""))
+    }
+
+    @Test fun `iOS scoped env beats scoped local properties`() {
+        File(projectDir, "local.properties").writeText(
+            """
+            api_key=local-generic
+            api_key.ios=local-ios
+            api_key.ios.debug=local-ios-debug
+            """.trimIndent() + "\n"
+        )
+
+        val result = setupIosProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            iosSourceContent = """
+                package com.example.test
+                fun iosValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            extraKenvyConfig = """
+                kenvy {
+                    variant.set("debug")
+                }
+            """.trimIndent(),
+            environment = mapOf("KENVY_API_KEY_IOS_DEBUG" to "ios-debug-env-wins"),
+            arguments = listOf("compileKotlinIosArm64")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyIosArm64")?.outcome)
+
+        val generated = File(projectDir, "build/generated/kenvy/iosArm64Main/kotlin/com/example/test/Kenvy.kt")
+        assertTrue(generated.readText().contains("actual val apiKey: String = \"ios-debug-env-wins\""))
     }
 }

@@ -125,6 +125,8 @@ over earlier entries.
 8. Matching unprefixed environment variable only when you opt in with
    `kenvy { legacyUnprefixedEnvironmentOverrides.set(true) }`
 9. Matching `KENVY_<NORMALIZED_NAME>` environment variable
+10. Matching `KENVY_<NORMALIZED_NAME>_<NORMALIZED_PLATFORM>` environment variable
+11. Matching `KENVY_<NORMALIZED_NAME>_<NORMALIZED_PLATFORM>_<NORMALIZED_VARIANT>` environment variable
 
 Local properties files are loaded in order and merged: root `local.properties` first, then
 module `local.properties`. Module values win when both files define the same key. When the
@@ -160,7 +162,8 @@ kenvy {
 Kenvy maps property names to environment variables by uppercasing and replacing
 non-alphanumeric separators with underscores, then prefixes the result with
 `KENVY_`. For example, `api_key` and `api-key` both map to
-`KENVY_API_KEY`.
+`KENVY_API_KEY`. Platform and variant segments use the same normalization:
+`KENVY_API_KEY_ANDROID_DEBUG` for platform `android` and variant `debug`.
 
 Kenvy ignores unprefixed variables such as `API_KEY` by default. This avoids
 accidental collisions with build-system variables such as `PLATFORM_NAME`
@@ -185,8 +188,11 @@ objects for platform source sets when you apply it to a KMP project.
 
 Android variant-specific overrides use the form
 `[overrides.android.debug]`. Kenvy can infer the Android variant from tasks
-such as `compileDebugKotlinAndroid`, or you can set `kenvy.variant`
-explicitly.
+such as `compileDebugKotlinAndroid`, `testDebugUnitTest`, and
+`assembleRelease`, or you can set `kenvy.variant` explicitly. Lifecycle tasks
+such as `build` and `check` do not imply a single Android variant. Multi-variant
+invocations such as `assembleDebug assembleRelease` require an explicit
+`kenvy.variant` value.
 
 For local secrets, use the same platform and variant segments in
 `local.properties`. For example, `api_key.android.release` overrides

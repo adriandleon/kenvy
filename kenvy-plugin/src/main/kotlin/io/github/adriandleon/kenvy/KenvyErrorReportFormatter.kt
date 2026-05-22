@@ -5,7 +5,9 @@ import org.gradle.api.GradleException
 internal const val KENVY_RESOLUTION_CHAIN =
     "properties.default -> overrides.common -> overrides.<platform> -> " +
         "overrides.<platform>.<variant> -> local.properties:<name> -> " +
-        "local.properties:<name>.<platform> -> local.properties:<name>.<platform>.<variant> -> environment:<NAME> (legacy opt-in only) -> environment:KENVY_<NAME>"
+        "local.properties:<name>.<platform> -> local.properties:<name>.<platform>.<variant> -> " +
+        "environment:<NAME> (legacy opt-in only) -> environment:KENVY_<NAME> -> " +
+        "environment:KENVY_<NAME>_<PLATFORM> -> environment:KENVY_<NAME>_<PLATFORM>_<VARIANT>"
 
 internal enum class KenvyConfigurationIssueCategory(val heading: String) {
     MISSING_VALUE("Missing values"),

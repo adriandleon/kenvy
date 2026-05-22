@@ -14,14 +14,56 @@ internal object KenvyResolver {
             .replace(Regex("[^A-Za-z0-9]+"), "_")
             .uppercase(Locale.ROOT)
 
-    fun validateEnvironmentNameCollisions(properties: List<KenvyProperty>) {
-        val byEnvName = properties.groupBy { toEnvVarName(it.name) }
+    fun toScopedEnvVarNames(propertyName: String, platform: String?, variant: String?): List<String> {
+        val generic = toEnvVarName(propertyName)
+        val normalizedPlatform = platform.normalizeEnvSegment()
+        val normalizedVariant = variant.normalizeEnvSegment()
+        return buildList {
+            add(generic)
+            if (normalizedPlatform != null) {
+                add("${generic}_$normalizedPlatform")
+                if (normalizedVariant != null) {
+                    add("${generic}_${normalizedPlatform}_$normalizedVariant")
+                }
+            }
+        }
+    }
+
+    private fun String?.normalizeEnvSegment(): String? =
+        this?.trim()
+            ?.replace(Regex("[^A-Za-z0-9]+"), "_")
+            ?.uppercase(Locale.ROOT)
+            ?.takeIf { it.isNotBlank() }
+
+    fun validateEnvironmentNameCollisions(
+        properties: List<KenvyProperty>,
+        platform: String? = null,
+        variant: String? = null
+    ) {
+        val normalizedPlatform = platform.normalizeEnvSegment()
+        val normalizedVariant = variant.normalizeEnvSegment()
+        val byEnvName = properties
+            .flatMap { property ->
+                val candidates = toScopedEnvVarNames(property.name, platform, variant)
+                candidates.mapIndexed { index, envName ->
+                    EnvironmentNameCandidate(
+                        envName = envName,
+                        propertyName = property.name,
+                        scope = when (index) {
+                            0 -> "generic"
+                            1 -> "platform '$normalizedPlatform'"
+                            else -> "platform '$normalizedPlatform' variant '$normalizedVariant'"
+                        }
+                    )
+                }
+            }
+            .groupBy { it.envName }
         val collisions = byEnvName.entries
             .filter { it.value.size > 1 }
             .map { collision ->
-                val names = collision.value.joinToString { it.name }
+                val candidates = collision.value.joinToString { "${it.propertyName} (${it.scope})" }
                 KenvyConfigurationIssue.resolutionConflict(
-                    summary = "Properties $names map to the same environment variable '${collision.key}'. " +
+                    summary = "Properties $candidates map to the same environment variable '${collision.key}'. " +
                         "Rename one of the properties to avoid ambiguous environment overrides.",
                     details = listOf("Resolution chain: $KENVY_RESOLUTION_CHAIN")
                 )
@@ -58,7 +100,7 @@ internal object KenvyResolver {
             { timeout -> KenvyExternalProviderTimeoutGate(timeout) },
         environmentProvider: (String) -> String?
     ): List<ResolvedKenvyValue> {
-        validateEnvironmentNameCollisions(contract.properties)
+        validateEnvironmentNameCollisions(contract.properties, platform, variant)
         val propertiesByName = contract.properties.associateBy { it.name }
         val providerBackedPropertyNames = contract.externalProviderRequests.map { it.propertyName }.toSet()
         val providerRequestsRequiringProvider = contract.externalProviderRequests.filterNot { request ->
@@ -115,6 +157,8 @@ internal object KenvyResolver {
     ): ResolvedKenvyValue {
         resolveEnvironmentValue(
             property = property,
+            platform = platform,
+            variant = variant,
             legacyUnprefixedEnvironmentOverrides = legacyUnprefixedEnvironmentOverrides,
             environmentProvider = environmentProvider
         )?.let { environmentValue ->
@@ -182,6 +226,12 @@ internal object KenvyResolver {
     }
 }
 
+private data class EnvironmentNameCandidate(
+    val envName: String,
+    val propertyName: String,
+    val scope: String
+)
+
 private fun hasEnvironmentOrLocalOverride(
     property: KenvyProperty,
     platform: String?,
@@ -192,6 +242,8 @@ private fun hasEnvironmentOrLocalOverride(
 ): Boolean {
     val envValue = resolveEnvironmentValue(
         property = property,
+        platform = platform,
+        variant = variant,
         legacyUnprefixedEnvironmentOverrides = legacyUnprefixedEnvironmentOverrides,
         environmentProvider = environmentProvider
     )
@@ -235,14 +287,19 @@ private fun resolveScopedLocalValue(
 
 private fun resolveEnvironmentValue(
     property: KenvyProperty,
+    platform: String?,
+    variant: String?,
     legacyUnprefixedEnvironmentOverrides: Boolean,
     environmentProvider: (String) -> String?
 ): String? {
-    val safeEnvValue = environmentProvider(KenvyResolver.toEnvVarName(property.name))?.takeIf { it.isNotBlank() }
+    val candidates = KenvyResolver.toScopedEnvVarNames(property.name, platform, variant)
+    // Last non-blank wins (higher specificity wins); blank more-specific does not mask non-blank generic
+    val safeEnvValue = candidates
+        .mapNotNull { name -> environmentProvider(name)?.takeIf { it.isNotBlank() } }
+        .lastOrNull()
     if (safeEnvValue != null) return safeEnvValue
 
     if (!legacyUnprefixedEnvironmentOverrides) return null
-
     return environmentProvider(KenvyResolver.toLegacyEnvVarName(property.name))?.takeIf { it.isNotBlank() }
 }
 
