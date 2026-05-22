@@ -35,7 +35,6 @@ jobs:
 
   functional-linux:
     name: Functional tests (Ubuntu)
-    if: github.event_name == 'pull_request'
     needs: [validation]
     runs-on: ubuntu-latest
     steps:
@@ -70,7 +69,6 @@ jobs:
 
   functional-macos:
     name: iOS functional tests (macOS)
-    if: github.event_name == 'pull_request'
     needs: [validation]
     runs-on: macos-latest
     steps:

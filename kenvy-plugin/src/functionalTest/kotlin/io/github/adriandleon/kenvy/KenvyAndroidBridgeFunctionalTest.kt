@@ -92,7 +92,7 @@ class KenvyAndroidBridgeFunctionalTest {
             .withProjectDir(projectDir)
             .withPluginClasspath()
             .withArguments(arguments)
-        return if (environment != null) runner.withEnvironment(System.getenv() + environment) else runner
+        return if (environment != null) runner.withEnvironment(kenvyScopedTestEnvironment(environment)) else runner
     }
 
     @Test fun `generateKenvyAndroid writes androidMain source with Android overrides`() {
@@ -418,5 +418,53 @@ class KenvyAndroidBridgeFunctionalTest {
 
         val generated = File(projectDir, "build/generated/kenvy/androidMain/kotlin/com/example/test/Kenvy.kt")
         assertTrue(generated.readText().contains("actual val apiKey: String = \"generic-env-value\""))
+    }
+
+    @Test fun `android debug unit test task resolves from KENVY_API_KEY_ANDROID_DEBUG env`() {
+        val result = setupAndroidProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            androidSourceContent = """
+                package com.example.test
+                fun androidValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            environment = mapOf(
+                "KENVY_API_KEY" to "generic-value",
+                "KENVY_API_KEY_ANDROID_DEBUG" to "android-debug-unit-test-value"
+            ),
+            arguments = listOf("testDebugUnitTest")
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyAndroid")?.outcome)
+
+        val generated = File(projectDir, "build/generated/kenvy/androidMain/kotlin/com/example/test/Kenvy.kt")
+        assertTrue(generated.readText().contains("actual val apiKey: String = \"android-debug-unit-test-value\""))
+    }
+
+    @Test fun `multiple requested Android variants fail with explicit variant guidance`() {
+        val result = setupAndroidProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "placeholder"
+            """.trimIndent(),
+            androidSourceContent = """
+                package com.example.test
+                fun androidValue(): String = Kenvy.apiKey
+            """.trimIndent(),
+            environment = mapOf(
+                "KENVY_API_KEY_ANDROID_DEBUG" to "debug-value",
+                "KENVY_API_KEY_ANDROID_RELEASE" to "release-value"
+            ),
+            arguments = listOf("assembleDebug", "assembleRelease")
+        ).buildAndFail()
+
+        assertTrue(result.output.contains("Multiple Android variants were requested"))
+        assertTrue(result.output.contains("debug"))
+        assertTrue(result.output.contains("release"))
+        assertTrue(result.output.contains("variant.set"))
     }
 }

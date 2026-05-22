@@ -69,7 +69,7 @@ class KenvyIosBridgeFunctionalTest {
             .withProjectDir(projectDir)
             .withPluginClasspath()
             .withArguments(arguments)
-        return if (environment != null) runner.withEnvironment(System.getenv() + environment) else runner
+        return if (environment != null) runner.withEnvironment(kenvyScopedTestEnvironment(environment)) else runner
     }
 
     @Test fun `generateKenvyIos writes shared iosMain source when iosMain source set exists`() {

@@ -1,6 +1,7 @@
 package io.github.adriandleon.kenvy
 
 import org.gradle.api.Action
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
@@ -217,7 +218,7 @@ private fun Project.buildEnvironmentValuesProvider(
             gradleProjectPath = projectPath,
             gradleProjectDir = projectDir
         )
-        KenvyResolver.validateEnvironmentNameCollisions(contract.properties)
+        KenvyResolver.validateEnvironmentNameCollisions(contract.properties, platform, variant)
         val legacyOptIn = legacyUnprefixedEnvironmentOverrides.getOrElse(false)
         val environmentNames = buildSet {
             contract.properties.forEach { prop ->
@@ -243,23 +244,34 @@ private fun Project.variantProviderFor(targetName: String, extension: KenvyExten
 
 private fun Project.requestedAndroidVariantName(): String? {
     val variants = gradle.startParameter.taskNames
-        .mapNotNull { taskName ->
-            val simpleName = taskName.substringAfterLast(':')
-            compileAndroidKotlinTaskRegex.matchEntire(simpleName)
-                ?.groupValues
-                ?.get(1)
-                ?: assembleAndroidTaskRegex.matchEntire(simpleName)
-                    ?.groupValues
-                    ?.get(1)
-        }
-        .map { it.replaceFirstChar { char -> char.lowercaseChar() } }
+        .mapNotNull { taskName -> androidVariantNameFromTask(taskName.substringAfterLast(':')) }
         .distinct()
+
+    if (variants.size > 1) {
+        throw GradleException(
+            "Kenvy: Multiple Android variants were requested (${variants.joinToString()}). " +
+                "Configure kenvy { variant.set(\"<variant>\") } explicitly when invoking multi-variant Android tasks."
+        )
+    }
 
     return variants.singleOrNull()
 }
 
-private val compileAndroidKotlinTaskRegex = Regex("compile(.+)KotlinAndroid")
-private val assembleAndroidTaskRegex = Regex("assemble(.+)")
+private fun androidVariantNameFromTask(taskName: String): String? =
+    androidVariantTaskRegexes.firstNotNullOfOrNull { regex ->
+        regex.matchEntire(taskName)
+            ?.groupValues
+            ?.get(1)
+            ?.replaceFirstChar { char -> char.lowercaseChar() }
+    }
+
+private val androidVariantTaskRegexes = listOf(
+    Regex("compile(.+)KotlinAndroid"),
+    Regex("assemble(.+)"),
+    Regex("bundle(.+)"),
+    Regex("test(.+)UnitTest"),
+    Regex("connected(.+)AndroidTest")
+)
 
 private fun Project.configureKmpGeneratedSource(sourceSetName: String, generatedSourceDir: Any) {
     val kmp = extensions.getByName("kotlin")

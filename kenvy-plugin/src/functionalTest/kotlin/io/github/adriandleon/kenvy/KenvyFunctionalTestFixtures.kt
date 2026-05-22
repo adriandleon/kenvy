@@ -21,6 +21,9 @@ internal fun newGradleRunner(projectDir: File, arguments: List<String>): GradleR
         .withPluginClasspath()
         .withArguments(arguments)
 
+internal fun kenvyScopedTestEnvironment(environment: Map<String, String>): Map<String, String> =
+    System.getenv().filterKeys { name -> !name.startsWith("KENVY_") } + environment
+
 internal class KenvyMultiModuleFixture(private val projectDir: File) {
     val moduleNames: List<String> = (1..20).map { "module%02d".format(it) }
 

@@ -375,6 +375,44 @@ class KenvyResolverTest {
         kotlin.test.assertContains(error.message.orEmpty(), "Resolution chain:")
     }
 
+    @Test fun `scoped environment name collision fails for active platform`() {
+        val contract = ParsedKenvyContract(
+            properties = listOf(
+                KenvyProperty("api_key", PropertyType.STRING, "a"),
+                KenvyProperty("api_key_android", PropertyType.STRING, "b")
+            )
+        )
+
+        val error = kotlin.test.assertFailsWith<org.gradle.api.GradleException> {
+            KenvyResolver.resolve(
+                contract = contract,
+                platform = "android",
+                localProperties = emptyMap()
+            ) { null }
+        }
+
+        kotlin.test.assertContains(error.message.orEmpty(), "same environment variable")
+        kotlin.test.assertContains(error.message.orEmpty(), "KENVY_API_KEY_ANDROID")
+        kotlin.test.assertContains(error.message.orEmpty(), "api_key")
+        kotlin.test.assertContains(error.message.orEmpty(), "api_key_android")
+    }
+
+    @Test fun `scoped environment name collision does not fail without matching scope`() {
+        val contract = ParsedKenvyContract(
+            properties = listOf(
+                KenvyProperty("api_key", PropertyType.STRING, "a"),
+                KenvyProperty("api_key_android", PropertyType.STRING, "b")
+            )
+        )
+
+        val result = KenvyResolver.resolve(
+            contract = contract,
+            localProperties = emptyMap()
+        ) { null }
+
+        assertEquals(listOf("a", "b"), result.map { it.resolvedValue })
+    }
+
     @Test fun `multiple environment name collisions are reported together`() {
         val contract = ParsedKenvyContract(
             properties = listOf(

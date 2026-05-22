@@ -35,14 +35,35 @@ internal object KenvyResolver {
             ?.uppercase(Locale.ROOT)
             ?.takeIf { it.isNotBlank() }
 
-    fun validateEnvironmentNameCollisions(properties: List<KenvyProperty>) {
-        val byEnvName = properties.groupBy { toEnvVarName(it.name) }
+    fun validateEnvironmentNameCollisions(
+        properties: List<KenvyProperty>,
+        platform: String? = null,
+        variant: String? = null
+    ) {
+        val normalizedPlatform = platform.normalizeEnvSegment()
+        val normalizedVariant = variant.normalizeEnvSegment()
+        val byEnvName = properties
+            .flatMap { property ->
+                val candidates = toScopedEnvVarNames(property.name, platform, variant)
+                candidates.mapIndexed { index, envName ->
+                    EnvironmentNameCandidate(
+                        envName = envName,
+                        propertyName = property.name,
+                        scope = when (index) {
+                            0 -> "generic"
+                            1 -> "platform '$normalizedPlatform'"
+                            else -> "platform '$normalizedPlatform' variant '$normalizedVariant'"
+                        }
+                    )
+                }
+            }
+            .groupBy { it.envName }
         val collisions = byEnvName.entries
             .filter { it.value.size > 1 }
             .map { collision ->
-                val names = collision.value.joinToString { it.name }
+                val candidates = collision.value.joinToString { "${it.propertyName} (${it.scope})" }
                 KenvyConfigurationIssue.resolutionConflict(
-                    summary = "Properties $names map to the same environment variable '${collision.key}'. " +
+                    summary = "Properties $candidates map to the same environment variable '${collision.key}'. " +
                         "Rename one of the properties to avoid ambiguous environment overrides.",
                     details = listOf("Resolution chain: $KENVY_RESOLUTION_CHAIN")
                 )
@@ -79,7 +100,7 @@ internal object KenvyResolver {
             { timeout -> KenvyExternalProviderTimeoutGate(timeout) },
         environmentProvider: (String) -> String?
     ): List<ResolvedKenvyValue> {
-        validateEnvironmentNameCollisions(contract.properties)
+        validateEnvironmentNameCollisions(contract.properties, platform, variant)
         val propertiesByName = contract.properties.associateBy { it.name }
         val providerBackedPropertyNames = contract.externalProviderRequests.map { it.propertyName }.toSet()
         val providerRequestsRequiringProvider = contract.externalProviderRequests.filterNot { request ->
@@ -204,6 +225,12 @@ internal object KenvyResolver {
         return merged
     }
 }
+
+private data class EnvironmentNameCandidate(
+    val envName: String,
+    val propertyName: String,
+    val scope: String
+)
 
 private fun hasEnvironmentOrLocalOverride(
     property: KenvyProperty,

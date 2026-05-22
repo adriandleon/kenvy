@@ -214,6 +214,13 @@ base_url = "https://android-debug.example.com"
 You can also set the platform and variant manually when you generate common
 output outside platform-specific tasks.
 
+Android target generation can infer a single variant from common
+variant-bearing tasks such as `compileDebugKotlinAndroid`, `testDebugUnitTest`,
+`connectedDebugAndroidTest`, `assembleRelease`, and `bundleRelease`. Lifecycle
+tasks such as `build` and `check` do not imply one variant, and multi-variant
+invocations such as `assembleDebug assembleRelease` require an explicit
+`kenvy.variant` value.
+
 ```kotlin
 kenvy {
     platform.set("android")

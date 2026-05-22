@@ -188,8 +188,11 @@ objects for platform source sets when you apply it to a KMP project.
 
 Android variant-specific overrides use the form
 `[overrides.android.debug]`. Kenvy can infer the Android variant from tasks
-such as `compileDebugKotlinAndroid`, or you can set `kenvy.variant`
-explicitly.
+such as `compileDebugKotlinAndroid`, `testDebugUnitTest`, and
+`assembleRelease`, or you can set `kenvy.variant` explicitly. Lifecycle tasks
+such as `build` and `check` do not imply a single Android variant. Multi-variant
+invocations such as `assembleDebug assembleRelease` require an explicit
+`kenvy.variant` value.
 
 For local secrets, use the same platform and variant segments in
 `local.properties`. For example, `api_key.android.release` overrides

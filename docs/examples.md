@@ -113,6 +113,13 @@ variant from the tested Android compile task. In that flow Kenvy runs
 `generateKenvyAndroid`, and resolves `api_key` from
 `[overrides.android.debug]`.
 
+Kenvy also infers Android variants from common variant-bearing tasks such as
+`testDebugUnitTest`, `connectedDebugAndroidTest`, `assembleRelease`, and
+`bundleRelease`. Lifecycle tasks such as `build` and `check` do not imply one
+variant; set `kenvy.variant` explicitly for those tasks. Multi-variant
+invocations such as `assembleDebug assembleRelease` require an explicit
+`kenvy.variant` value.
+
 If you keep untracked Android secrets locally, use the same property name with
 scoped keys in `local.properties`:
 
@@ -377,6 +384,15 @@ different build targets.
 Kenvy does not integrate directly with CI providers. The examples below show
 the environment variable mapping pattern; adapt the secret names and step
 syntax to your CI system.
+
+If you want to pass the Kenvy variant from CI with `-PkenvyVariant=...`, wire
+that project property in your build script:
+
+```kotlin
+kenvy {
+    variant.set(providers.gradleProperty("kenvyVariant").orElse(""))
+}
+```
 
 ### GitHub Actions
 
