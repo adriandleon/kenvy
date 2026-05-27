@@ -5,18 +5,23 @@ consumer project's existing KMP, Android, iOS, desktop, and Compose layout.
 
 ## Release state
 
-The plugin ID is `io.github.adriandleon.kenvy`. The public docs currently state
-that Kenvy is not yet on the Gradle Plugin Portal or Maven Central. External
-consumers must use the documented local staged path until publication evidence
-changes:
+The plugin ID is `io.github.adriandleon.kenvy`. Kenvy is published on the
+Gradle Plugin Portal, and normal consumers should install the documented Portal
+version with the plugins DSL:
 
-1. Publish Kenvy from this repository with
-   `./gradlew :kenvy-plugin:publishToMavenLocal`.
-2. Add `mavenLocal()` to the consumer's `pluginManagement.repositories`.
-3. Apply `id("io.github.adriandleon.kenvy")` in the owning module.
+```kotlin
+plugins {
+    id("org.jetbrains.kotlin.multiplatform") version "2.1.20"
+    id("io.github.adriandleon.kenvy") version "0.1.2"
+}
+```
 
-Before claiming public Portal availability, read `README.md`,
-`docs/known-limitations.md`, and `docs/release-checklist.md`.
+Before changing the documented version, read `README.md`,
+`docs/known-limitations.md`, and `docs/release-checklist.md`, then verify the
+GitHub release, Gradle Plugin Portal page, Release workflow run, and public
+consumer smoke evidence. Maintainers may use local Maven staging for plugin
+development fallback, but it is not the normal install path for external
+consumers.
 
 ## Module ownership
 

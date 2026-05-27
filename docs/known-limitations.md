@@ -4,20 +4,23 @@ This page documents the current MVP boundaries so external adopters understand
 what is stable, what is intentionally deferred, and what current checks do not
 guarantee.
 
-## Public release is not yet on the Gradle Plugin Portal
+## Public release channel
 
-`kenvy-plugin/build.gradle.kts` applies `com.gradle.plugin-publish` 2.1.1 and
-is wired for Gradle Plugin Portal publication. The local staged artifact
-(published via `./gradlew :kenvy-plugin:publishToMavenLocal`) is verified and a
-fresh external consumer can apply the plugin without any repo-local shortcuts.
+Kenvy resolves from the Gradle Plugin Portal with plugin ID
+`io.github.adriandleon.kenvy`. The current verified consumer version is
+`0.1.2`, and the supported normal install path is the Gradle plugins DSL:
 
-The plugin ID `io.github.adriandleon.kenvy` does **not** yet resolve from the
-Gradle Plugin Portal or Maven Central. Public Portal publication requires
-Portal credentials and the final publish command. Until that publish runs,
-external consumers must configure `mavenLocal()` in
-`pluginManagement.repositories` and run `publishToMavenLocal` from this
-repository first. See [release checklist](release-checklist.md) for the
-remaining pre-launch steps.
+```kotlin
+plugins {
+    id("io.github.adriandleon.kenvy") version "0.1.2"
+}
+```
+
+Kenvy does not currently claim Maven Central availability as a separate
+consumer channel. Maintainers can still use local Maven staging for development
+fallbacks, but public consumers should follow the Portal install path. See
+[release checklist](release-checklist.md) for the release evidence process and
+for handling temporary GitHub Release versus Portal version drift.
 
 ## Git ignore verification is intentionally narrow
 
@@ -129,5 +132,5 @@ you need temporary migration compatibility, configure
 
 ## Next steps
 
-Check [release checklist](release-checklist.md) before launch and use
+Check [release checklist](release-checklist.md) before releasing and use
 [getting started](getting-started.md) to stay within the tested MVP behavior.

@@ -4,11 +4,6 @@ Kenvy is a Gradle plugin for build-time Kotlin Multiplatform configuration. It
 turns a `kenvy.toml` contract into typed Kotlin source, example local
 properties, and target-specific generated code for the KMP targets you declare.
 
-This repository contains the plugin implementation and its publication wiring
-for the Gradle Plugin Portal. A local staged artifact is verified and an
-external consumer smoke test passes. The plugin is not yet on the Gradle Plugin
-Portal; public release requires Portal credentials and final publication.
-
 ## What you get
 
 Kenvy focuses on build-time configuration rather than runtime lookup. The MVP
@@ -43,12 +38,9 @@ explicitly.
 ## Quick start
 
 Use this minimal setup to generate shared configuration for `commonMain`.
-
-The plugin ID `io.github.adriandleon.kenvy` is not yet on the Gradle Plugin
-Portal. For local staged evaluation, publish to Maven Local first and configure
-`mavenLocal()` in `pluginManagement.repositories`. See
-[release checklist](docs/release-checklist.md) for the remaining Portal release
-steps.
+Kenvy is published on the Gradle Plugin Portal as
+`io.github.adriandleon.kenvy`; normal consumers should install the documented
+Portal version directly with the plugins DSL.
 
 1. Apply the plugin in your Gradle build.
 2. Use the plugin ID `io.github.adriandleon.kenvy`.
@@ -59,7 +51,7 @@ steps.
 ```kotlin
 plugins {
     id("org.jetbrains.kotlin.multiplatform") version "2.1.20"
-    id("io.github.adriandleon.kenvy")
+    id("io.github.adriandleon.kenvy") version "0.1.2"
 }
 
 group = "com.example.app"
@@ -213,16 +205,16 @@ limits.
 
 ## Current release status
 
-The core plugin implementation is in place, all tests pass, publication wiring
-is configured via `com.gradle.plugin-publish` 2.1.1, and a fresh external
-consumer smoke test passes against the locally staged artifact. Public release
-to the Gradle Plugin Portal requires Portal credentials and final publication.
-See [release checklist](docs/release-checklist.md) for the remaining
-pre-launch steps.
+The latest verified GitHub release is
+[`v0.1.2`](https://github.com/adriandleon/kenvy/releases/tag/v0.1.2), published
+on 2026-05-27. The Gradle Plugin Portal latest version is `0.1.2`, also
+published on 2026-05-27. When GitHub Releases and the Portal temporarily drift
+after a publish, consumers should use the latest version visible on the Gradle
+Plugin Portal until the release checklist records matching evidence.
 
 ## Next steps
 
 Start with [Getting started](docs/getting-started.md), then use
 [Examples](docs/examples.md) to match your target layout. If you are preparing
-the first public release, work through
-[Release checklist](docs/release-checklist.md) before publishing anything.
+a release, work through [Release checklist](docs/release-checklist.md) before
+publishing anything.

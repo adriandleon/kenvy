@@ -2,10 +2,9 @@
 
 These examples mirror behaviors that already have functional test coverage in
 this repository. Use them as copy-paste starting points for consumer projects.
-The plugin ID `io.github.adriandleon.kenvy` is not yet on the Gradle Plugin
-Portal. For local staged evaluation, publish to Maven Local first
-(`./gradlew :kenvy-plugin:publishToMavenLocal`) and add `mavenLocal()` to
-`pluginManagement.repositories` in your consuming build.
+Kenvy is published on the Gradle Plugin Portal as
+`io.github.adriandleon.kenvy`. Normal consumers should apply the documented
+Portal version directly with the plugins DSL.
 
 ## Common-only shared configuration
 
@@ -15,7 +14,7 @@ platform-specific `actual` objects yet.
 ```kotlin
 plugins {
     id("org.jetbrains.kotlin.multiplatform") version "2.1.20"
-    id("io.github.adriandleon.kenvy")
+    id("io.github.adriandleon.kenvy") version "0.1.2"
 }
 
 group = "com.example.shared"
@@ -64,7 +63,7 @@ Use this layout when you want Kenvy to generate an `expect` object in
 plugins {
     id("com.android.library") version "8.5.2"
     id("org.jetbrains.kotlin.multiplatform") version "2.1.20"
-    id("io.github.adriandleon.kenvy")
+    id("io.github.adriandleon.kenvy") version "0.1.2"
 }
 
 group = "com.example.mobile"
@@ -144,7 +143,7 @@ canonical `ios` override key.
 ```kotlin
 plugins {
     id("org.jetbrains.kotlin.multiplatform") version "2.1.20"
-    id("io.github.adriandleon.kenvy")
+    id("io.github.adriandleon.kenvy") version "0.1.2"
 }
 
 group = "com.example.apple"
@@ -226,7 +225,9 @@ description = "Backend API key"
 
 ```kotlin
 // shared/build.gradle.kts
-plugins { id("io.github.adriandleon.kenvy") }
+plugins {
+    id("io.github.adriandleon.kenvy") version "0.1.2"
+}
 group = "com.example.shared"
 ```
 
@@ -372,7 +373,7 @@ default. If you need to preserve that legacy behavior temporarily, opt in with
 
 Use [getting started](getting-started.md) for setup details and
 [release checklist](release-checklist.md) when you want to validate the project
-for external launch.
+for a release.
 
 ## CI usage with scoped environment variables
 

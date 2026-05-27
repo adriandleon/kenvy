@@ -19,7 +19,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 
 group = "io.github.adriandleon.kenvy"
 version = providers.gradleProperty("kenvyVersion")
-    .orElse("0.1.1-SNAPSHOT")
+    .orElse("0.1.3-SNAPSHOT")
     .get()
 
 // Functional test source set — implementation begins in Story 1.2
@@ -46,7 +46,7 @@ gradlePlugin {
 }
 
 // Signing is opt-in: only activated when in-memory PGP credentials are present.
-// Useful for signed Portal artifacts; not required for publishToMavenLocal.
+// Useful for signed Portal artifacts; not required for local Maven staging.
 val signingKey = findProperty("signing.key") as String? ?: System.getenv("SIGNING_KEY")
 val signingPassword = findProperty("signing.password") as String? ?: System.getenv("SIGNING_PASSWORD")
 if (signingKey != null && signingPassword != null) {

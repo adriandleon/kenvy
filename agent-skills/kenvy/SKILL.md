@@ -30,8 +30,9 @@ and tests as the source of truth before making factual claims.
 - Don't invent Swift, Info.plist, setup wizard, provider adapter, or cloud
   secret APIs.
 - The plugin ID is `io.github.adriandleon.kenvy`.
-- Kenvy is not yet on the Gradle Plugin Portal; external consumers need the
-  documented local staged evaluation path until publication evidence changes.
+- Kenvy is published on the Gradle Plugin Portal; normal consumers should use
+  the documented Portal version unless release evidence shows a temporary
+  version drift.
 - iOS uses the canonical platform key `ios`.
 - Generated Kotlin property names default to lower camel case.
 - Root `local.properties` is read before module `local.properties`; module
@@ -112,9 +113,10 @@ characters, links resolve, and no real secrets appear.
 ## Stop conditions
 
 Stop and ask before continuing when real secrets are visible in tracked files,
-the plugin publication/version path is unresolved, `kenvy.toml` ownership is
-ambiguous, the requested behavior is unsupported by public docs/source, or
-validation fails for a reason unrelated to the intended Kenvy change.
+the documented plugin version conflicts with public release evidence,
+`kenvy.toml` ownership is ambiguous, the requested behavior is unsupported by
+public docs/source, or validation fails for a reason unrelated to the intended
+Kenvy change.
 
 ## Report format
 

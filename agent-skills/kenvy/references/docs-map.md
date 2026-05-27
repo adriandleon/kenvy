@@ -15,10 +15,11 @@ as product documentation.
   iOS, multi-module root local properties, custom generated names, example
   generation, merge, and CI usage.
 - `docs/known-limitations.md`: unsupported or deferred behavior, including
-  Portal release state, provider adapters, diagnostics timing, iOS variants,
-  build-cache caution, and naming collisions.
-- `docs/release-checklist.md`: release gates, local staged publication, Portal
-  credential requirements, and publication status evidence.
+  release-channel boundaries, provider adapters, diagnostics timing, iOS
+  variants, build-cache caution, and naming collisions.
+- `docs/release-checklist.md`: release gates, GitHub and Portal evidence,
+  public consumer smoke proof, Portal credential requirements, and version
+  drift handling.
 
 ## Source and tests
 
@@ -49,7 +50,7 @@ Use focused searches before editing:
 rg -n "generateKenvy|mergeKenvy|generateKenvyExample" README.md docs kenvy-plugin/src
 rg -n "localPropertiesFiles|legacyUnprefixed|generatedPropertyNameStyle|platform|variant" README.md docs kenvy-plugin/src
 rg -n "KENVY_|toScopedEnvVarNames|api_key.android|overrides.android" README.md docs kenvy-plugin/src
-rg -n "Plugin Portal|mavenLocal|publishToMavenLocal" README.md docs
+rg -n "Plugin Portal|public consumer smoke|KENVY_PUBLIC_VERSION|publishToMavenLocal" README.md docs agent-skills
 ```
 
 When docs and source appear to disagree, treat source plus tests as the

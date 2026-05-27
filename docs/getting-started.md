@@ -25,17 +25,13 @@ Multiplatform plugin and declare the targets you need.
 
 Apply the plugin in the module that owns your `kenvy.toml` file.
 
-Kenvy is not yet on the Gradle Plugin Portal or Maven Central. For local staged
-evaluation, publish to Maven Local from this repository first
-(`./gradlew :kenvy-plugin:publishToMavenLocal`), then add `mavenLocal()` to
-`pluginManagement.repositories` in your consuming build. See the
-[release checklist](release-checklist.md) for the remaining Portal release
-steps.
+Kenvy is published on the Gradle Plugin Portal. Normal consumers should use the
+plugins DSL with the documented version:
 
 ```kotlin
 plugins {
     id("org.jetbrains.kotlin.multiplatform") version "2.1.20"
-    id("io.github.adriandleon.kenvy")
+    id("io.github.adriandleon.kenvy") version "0.1.2"
 }
 
 group = "com.example.app"
@@ -393,6 +389,6 @@ environment variable values into `local.properties`.
 
 Use [examples](examples.md) to match your target layout, then review
 [known limitations](known-limitations.md) before adopting Kenvy in a shared
-team workflow. Use the [release checklist](release-checklist.md) for launch
-readiness work; local staged validation is complete and public Portal release
-is the remaining pre-launch step.
+team workflow. Maintainers preparing a release should use the
+[release checklist](release-checklist.md) to record GitHub, Portal, workflow,
+and public consumer smoke evidence.
