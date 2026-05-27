@@ -130,7 +130,7 @@ class KenvyAndroidBridgeFunctionalTest {
         assertTrue(content.contains("val retryCount: Int = 7"))
     }
 
-    @Test fun `androidMain compilation consumes generated bridge without manual source set wiring`() {
+    @Test fun `androidMain compilation consumes internal generated expect actual bridge without manual source set wiring`() {
         val result = setupAndroidProject(
             tomlContent = """
                 [properties.api_key]
@@ -152,6 +152,7 @@ class KenvyAndroidBridgeFunctionalTest {
             extraKenvyConfig = """
                 kenvy {
                     interfaceName.set("AppConfig")
+                    generatedVisibility.set("internal")
                 }
             """.trimIndent(),
             arguments = listOf("compileDebugKotlinAndroid")
@@ -164,12 +165,12 @@ class KenvyAndroidBridgeFunctionalTest {
 
         val commonGenerated = File(projectDir, "build/generated/kenvy/commonMain/kotlin/com/example/test/AppConfig.kt")
         assertTrue(commonGenerated.exists())
-        assertTrue(commonGenerated.readText().contains("expect object AppConfig"))
+        assertTrue(commonGenerated.readText().contains("internal expect object AppConfig"))
 
         val generated = File(projectDir, "build/generated/kenvy/androidMain/kotlin/com/example/test/AppConfig.kt")
         assertTrue(generated.exists())
         val content = generated.readText()
-        assertTrue(content.contains("actual object AppConfig"))
+        assertTrue(content.contains("internal actual object AppConfig"))
         assertTrue(content.contains("val apiKey: String = \"common-fallback\""))
         assertTrue(content.contains("val timeout: Long = 5000L"))
 

@@ -52,6 +52,13 @@ abstract class KenvyExtension {
     abstract val generatedPropertyNameStyle: Property<String>
 
     /**
+     * Controls the visibility modifier on the generated object and its members.
+     * Accepted values: "public" (default), "internal".
+     * Use "internal" for API-surface-sensitive shared modules.
+     */
+    abstract val generatedVisibility: Property<String>
+
+    /**
      * Local properties files consulted during resolution, in order. Later files override earlier
      * files for the same key. Defaults to root `local.properties` followed by module
      * `local.properties` (root only for single-project builds).

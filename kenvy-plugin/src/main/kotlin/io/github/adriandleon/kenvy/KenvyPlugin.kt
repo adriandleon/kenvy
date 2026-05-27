@@ -34,6 +34,7 @@ class KenvyPlugin : Plugin<Project> {
         extension.cacheGeneratedOutput.convention(false)
         extension.legacyUnprefixedEnvironmentOverrides.convention(false)
         extension.generatedPropertyNameStyle.convention(GeneratedPropertyNameStyle.LOWER_CAMEL.value)
+        extension.generatedVisibility.convention(GeneratedVisibility.PUBLIC.value)
         extension.platform.convention("")
         extension.variant.convention("")
 
@@ -184,6 +185,7 @@ private fun Project.registerGenerateKenvyTask(
             legacyUnprefixedEnvironmentOverrides.set(extension.legacyUnprefixedEnvironmentOverrides)
             generatedPropertyNameStyle.set(extension.generatedPropertyNameStyle)
             declarationMode.set(declarationModeProvider)
+            generatedVisibility.set(extension.generatedVisibility)
 
             localPropertiesFiles.from(extension.localPropertiesFiles)
             projectDirectory.set(layout.projectDirectory)

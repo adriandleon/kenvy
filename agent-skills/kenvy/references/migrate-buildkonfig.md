@@ -9,8 +9,10 @@ prove parity before removing BuildKonfig.
 | BuildKonfig | Kenvy |
 | --- | --- |
 | `com.codingfeline.buildkonfig` | `io.github.adriandleon.kenvy` |
-| `packageName` | `kenvy.packageName` |
-| `objectName` | `kenvy.interfaceName` |
+| `packageName = "com.example.app"` | `kenvy { packageName.set("com.example.app") }` |
+| `objectName = "BuildKonfig"` | `kenvy { interfaceName.set("BuildKonfig") }` |
+| Default generated internal object | `kenvy { generatedVisibility.set("internal") }` |
+| `exposeObjectWithName = "PublicConfig"` | `kenvy { interfaceName.set("PublicConfig"); generatedVisibility.set("public") }` |
 | `defaultConfigs` fields | `[properties.<name>]` and public defaults |
 | `targetConfigs { create("android") { ... } }` | `[overrides.android]`, scoped local keys, or scoped CI env vars |
 | Flavor target values | `[overrides.<platform>.<variant>]` or scoped local/CI names |
@@ -18,6 +20,31 @@ prove parity before removing BuildKonfig.
 
 Match `packageName` and `objectName` only when it reduces call-site churn. If
 the project can tolerate a new API, prefer the Kenvy default object `Kenvy`.
+
+## Visibility mapping
+
+BuildKonfig generates `internal object BuildKonfig` by default and
+`internal expect object BuildKonfig` / `internal actual object BuildKonfig`
+when target configs are present.
+
+Kenvy generates `public` (no-modifier) declarations by default. To match
+BuildKonfig's internal default:
+
+```kotlin
+kenvy {
+    interfaceName.set("BuildKonfig")
+    generatedVisibility.set("internal")
+}
+```
+
+To match BuildKonfig's `exposeObjectWithName`:
+
+```kotlin
+kenvy {
+    interfaceName.set("PublicConfig")
+    generatedVisibility.set("public")
+}
+```
 
 ## Supported types
 
@@ -27,8 +54,7 @@ supports behavior that is not equivalent in Kenvy, including:
 - `Float`
 - Nullable fields
 - `const` options
-- `exposeObjectWithName`
-- Kotlin/JS export behavior
+- JS export behavior (no Kenvy equivalent for `exposeObjectWithName` JS behavior)
 - Flavor selection through `buildkonfig.flavor`
 - Gradle-DSL-defined values as the primary contract
 - HMPP target-config behavior that has no direct Kenvy concept
@@ -86,7 +112,7 @@ Before removing BuildKonfig, verify:
 - Supported field types.
 - Target-specific values.
 - Flavor or variant behavior.
-- Visibility and export expectations.
+- Visibility: configure `generatedVisibility.set("internal")` to match BuildKonfig's default internal generated object.
 - Call sites in common, Android, iOS, JVM, and tests.
 - CI and local secret names.
 - Generation and compile tasks.

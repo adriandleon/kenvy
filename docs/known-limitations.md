@@ -119,6 +119,22 @@ generation instead of silently producing broken source.
 Set `kenvy.packageName` and `kenvy.interfaceName` explicitly if your defaults
 do not form valid Kotlin identifiers.
 
+## Generated declarations are public by default
+
+Kenvy generates declarations without an explicit visibility modifier, making
+them public in Kotlin. Shared modules with a constrained public API surface
+should set `kenvy { generatedVisibility.set("internal") }` to generate
+`internal object` declarations that remain module-private.
+
+When using the default public visibility, Kenvy emits a lifecycle diagnostic
+at task execution time. This diagnostic fires for any build using public
+visibility, including when `generatedVisibility.set("public")` is set
+explicitly. Set `generatedVisibility.set("internal")` to suppress it.
+
+Only `"public"` and `"internal"` are accepted values. `"private"` and
+`"protected"` are not valid for top-level generated declarations and will fail
+the build.
+
 ## Generated Kotlin names can collide after lower camel conversion
 
 Kenvy keeps contract keys canonical, but it now emits generated Kotlin

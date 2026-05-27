@@ -75,8 +75,30 @@ The public extension includes:
 - `variant`
 - `cacheGeneratedOutput`
 - `generatedPropertyNameStyle`
+- `generatedVisibility`
 - `legacyUnprefixedEnvironmentOverrides`
 - `localPropertiesFiles`
+
+### generatedVisibility
+
+Controls the visibility modifier on the generated top-level object. Accepted
+values are `"public"` (default) and `"internal"`. Any other value fails the
+build.
+
+```kotlin
+kenvy {
+    generatedVisibility.set("internal")
+}
+```
+
+With `"internal"`, the generated classifier becomes `internal object`,
+`internal expect object`, or `internal actual object` depending on the KMP
+target. The default `"public"` preserves the current generated source shape
+with no explicit visibility modifier (Kotlin's default is public).
+
+When visibility is not configured or is `"public"`, Kenvy emits a lifecycle
+diagnostic at task execution time that points API-surface-sensitive consumers
+to this setting.
 
 Set `platform` and `variant` only when generation must resolve as a specific
 target or variant. Android target tasks can infer a single variant from

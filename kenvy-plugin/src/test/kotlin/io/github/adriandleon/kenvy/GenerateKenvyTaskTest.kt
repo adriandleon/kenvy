@@ -499,4 +499,68 @@ class GenerateKenvyTaskTest {
 
         assertFalse(src.contains("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING"))
     }
+
+    @Test fun `internal visibility emits internal object`() {
+        val src = buildGeneratedSource(
+            "com.example",
+            "Kenvy",
+            resolved(KenvyProperty("api_key", PropertyType.STRING, "value")),
+            visibility = GeneratedVisibility.INTERNAL
+        )
+        assertContains(src, "internal object Kenvy {")
+    }
+
+    @Test fun `internal visibility with expect object emits internal expect object`() {
+        val src = buildGeneratedSource(
+            "com.example",
+            "Kenvy",
+            resolved(KenvyProperty("api_key", PropertyType.STRING, "value")),
+            mode = GeneratedDeclarationMode.EXPECT_OBJECT,
+            visibility = GeneratedVisibility.INTERNAL
+        )
+        assertContains(src, "internal expect object Kenvy {")
+    }
+
+    @Test fun `internal visibility with actual object emits internal actual object`() {
+        val src = buildGeneratedSource(
+            "com.example",
+            "Kenvy",
+            resolved(KenvyProperty("timeout", PropertyType.LONG, "5000")),
+            mode = GeneratedDeclarationMode.ACTUAL_OBJECT,
+            visibility = GeneratedVisibility.INTERNAL
+        )
+        assertContains(src, "internal actual object Kenvy {")
+    }
+
+    @Test fun `public visibility preserves existing object shape with no modifier`() {
+        val src = buildGeneratedSource(
+            "com.example",
+            "Kenvy",
+            resolved(KenvyProperty("api_key", PropertyType.STRING, "value")),
+            visibility = GeneratedVisibility.PUBLIC
+        )
+        assertContains(src, "object Kenvy {")
+        assertFalse(src.contains("public object"))
+    }
+
+    @Test fun `invalid generatedVisibility value fails with clear error`() {
+        val error = assertFailsWith<GradleException> {
+            GeneratedVisibility.fromValue("protected")
+        }
+        assertContains(error.message.orEmpty(), "protected")
+        assertContains(error.message.orEmpty(), "public")
+        assertContains(error.message.orEmpty(), "internal")
+    }
+
+    @Test fun `internal visibility preserves expect actual warning suppression ordering`() {
+        val src = buildGeneratedSource(
+            "com.example",
+            "Kenvy",
+            resolved(KenvyProperty("api_key", PropertyType.STRING, "value")),
+            mode = GeneratedDeclarationMode.EXPECT_OBJECT,
+            visibility = GeneratedVisibility.INTERNAL
+        )
+        assertTrue(src.indexOf("@file:Suppress(\"EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING\")") < src.indexOf("package com.example"))
+        assertContains(src, "internal expect object Kenvy {")
+    }
 }

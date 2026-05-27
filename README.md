@@ -139,6 +139,19 @@ kenvy {
 }
 ```
 
+Generated declarations are public by default. For shared modules with a
+constrained public API surface, set `generatedVisibility` to `"internal"`:
+
+```kotlin
+kenvy {
+    generatedVisibility.set("internal")
+}
+```
+
+This generates `internal object Kenvy { ... }` in common and `internal actual
+object Kenvy { ... }` in platform source sets. Accepted values are `"public"`
+(default) and `"internal"`.
+
 To add a custom local properties file or replace the defaults, configure the extension:
 
 ```kotlin
