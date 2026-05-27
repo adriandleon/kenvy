@@ -257,6 +257,7 @@ Defaults:
 - `packageName`: `project.group.toString()`
 - `interfaceName`: `Kenvy`
 - `generatedPropertyNameStyle`: `lower-camel`
+- `generatedVisibility`: `public`
 - `platform`: empty
 - `variant`: empty
 - `cacheGeneratedOutput`: `false`
@@ -277,6 +278,42 @@ kenvy {
 
 That keeps names such as `api_key` in generated Kotlin source while the rest of
 the resolution model continues to use the same canonical contract keys.
+
+## Configure generated visibility
+
+Generated declarations are public by default. If your shared module has a
+constrained public API surface, configure `generatedVisibility` to keep
+configuration types internal to the module:
+
+```kotlin
+kenvy {
+    generatedVisibility.set("internal")
+}
+```
+
+With `"internal"`, the generated object and its members receive the `internal`
+modifier:
+
+```kotlin
+internal object Kenvy {
+    val apiKey: String = "value"
+}
+```
+
+For KMP projects, the common `expect` and all platform `actual` declarations
+receive the same modifier:
+
+```kotlin
+internal expect object Kenvy { ... }
+internal actual object Kenvy { ... }
+```
+
+The two accepted values are `"public"` (default) and `"internal"`. Any other
+value fails the build with a clear error.
+
+Kenvy emits a lifecycle diagnostic when generating with the default public
+visibility. Set `generatedVisibility.set("internal")` to suppress it for
+API-surface-sensitive shared modules.
 
 Only set `platform` and `variant` directly when you need common generation to
 resolve as a specific target outside target-specific tasks. When KMP target

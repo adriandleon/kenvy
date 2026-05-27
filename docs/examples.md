@@ -300,6 +300,41 @@ With that configuration, `packageName` controls the generated package and
 name. Kenvy writes `AppConfig.kt` and exposes `AppConfig.apiKey` instead of
 `Kenvy.apiKey`.
 
+## Internal generated API
+
+For shared modules with a constrained public API surface, configure
+`generatedVisibility` to keep configuration types internal to the module.
+This matches BuildKonfig's default behavior of generating `internal object`.
+
+```kotlin
+kenvy {
+    packageName.set("com.example.config")
+    interfaceName.set("BuildKonfig")
+    generatedVisibility.set("internal")
+}
+```
+
+Kenvy generates:
+
+```kotlin
+internal object BuildKonfig {
+    val apiKey: String = "value"
+}
+```
+
+For KMP projects with Android and iOS targets:
+
+```kotlin
+// commonMain
+internal expect object BuildKonfig { val apiKey: String }
+
+// androidMain, iosMain
+internal actual object BuildKonfig { actual val apiKey: String = "value" }
+```
+
+Internal declarations compile from any source in the same Gradle module.
+They are not visible to consumers of the module.
+
 ## Migrating from preserved-name generated properties
 
 By default, Kenvy generates lower camel case Kotlin property names. For example,

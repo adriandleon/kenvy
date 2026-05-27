@@ -275,4 +275,105 @@ class KenvyCodegenFunctionalTest {
         assertTrue(generated.readText().contains("val api_key: String = \"configured-value\""))
     }
 
+    @Test fun `internal generatedVisibility produces internal object declaration`() {
+        val result = setupProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "configured-value"
+            """.trimIndent(),
+            extraConfig = """
+                kenvy { generatedVisibility.set("internal") }
+            """.trimIndent()
+        ).build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvy")?.outcome)
+        val generated = File(projectDir, "build/generated/kenvy/commonMain/kotlin/com/example/test/Kenvy.kt")
+        assertTrue(generated.exists())
+        assertTrue(generated.readText().contains("internal object Kenvy {"))
+    }
+
+    @Test fun `internal generatedVisibility suppresses default-visibility diagnostic`() {
+        val result = setupProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "value"
+            """.trimIndent(),
+            extraConfig = """
+                kenvy { generatedVisibility.set("internal") }
+            """.trimIndent()
+        ).build()
+
+        assertFalse(result.output.contains("public by default"))
+    }
+
+    @Test fun `default generatedVisibility emits public-visibility diagnostic`() {
+        val result = setupProject(
+            tomlContent = """
+                [properties.api_key]
+                type = "String"
+                default = "value"
+            """.trimIndent()
+        ).build()
+
+        assertTrue(result.output.contains("public by default"))
+    }
+
+    @Test fun `KMP compile can access generated internal Kenvy from commonMain`() {
+        File(projectDir, "settings.gradle.kts").writeText("""
+            pluginManagement {
+                repositories {
+                    google()
+                    mavenCentral()
+                    gradlePluginPortal()
+                }
+            }
+            dependencyResolutionManagement {
+                repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+                repositories {
+                    google()
+                    mavenCentral()
+                }
+            }
+            rootProject.name = "test"
+        """.trimIndent())
+        File(projectDir, "build.gradle.kts").writeText("""
+            plugins {
+                id("org.jetbrains.kotlin.multiplatform") version "2.1.20"
+                id("io.github.adriandleon.kenvy")
+            }
+
+            group = "com.example.test"
+
+            kenvy { generatedVisibility.set("internal") }
+
+            kotlin {
+                jvm()
+            }
+        """.trimIndent())
+        File(projectDir, "kenvy.toml").writeText("""
+            [properties.api_key]
+            type = "String"
+            default = "compiled-value"
+        """.trimIndent())
+
+        val sourceDir = File(projectDir, "src/commonMain/kotlin/com/example/test")
+        sourceDir.mkdirs()
+        File(sourceDir, "UseKenvy.kt").writeText("""
+            package com.example.test
+
+            fun useKenvy(): String = Kenvy.apiKey
+        """.trimIndent())
+
+        val result = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withPluginClasspath()
+            .withArguments("compileKotlinJvm")
+            .build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvy")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":compileKotlinJvm")?.outcome)
+    }
+
 }
