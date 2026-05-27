@@ -291,8 +291,7 @@ kenvy {
 }
 ```
 
-With `"internal"`, the generated object and its members receive the `internal`
-modifier:
+With `"internal"`, the generated object receives the `internal` modifier:
 
 ```kotlin
 internal object Kenvy {
@@ -300,7 +299,7 @@ internal object Kenvy {
 }
 ```
 
-For KMP projects, the common `expect` and all platform `actual` declarations
+For KMP projects, the common `expect` object and all platform `actual` objects
 receive the same modifier:
 
 ```kotlin

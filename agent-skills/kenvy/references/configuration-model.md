@@ -81,9 +81,9 @@ The public extension includes:
 
 ### generatedVisibility
 
-Controls the visibility modifier on the generated top-level object and its
-members. Accepted values are `"public"` (default) and `"internal"`. Any other
-value fails the build.
+Controls the visibility modifier on the generated top-level object. Accepted
+values are `"public"` (default) and `"internal"`. Any other value fails the
+build.
 
 ```kotlin
 kenvy {
