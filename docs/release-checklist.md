@@ -1,29 +1,39 @@
-# Kenvy MVP release checklist
+# Kenvy release checklist
 
-This checklist defines the minimum evidence required before the first public
-open-source release of Kenvy. It is intentionally strict because the MVP code
-is ahead of its release packaging. Each section is labelled **blocking** or
-**advisory** so the go/no-go decision is unambiguous.
+This checklist defines the evidence maintainers must record for each public
+Kenvy release. It is intentionally strict because release metadata can drift
+between GitHub Releases, the Gradle Plugin Portal, docs, and agent-facing
+install guidance.
 
-## Current status
+## Current verified release
 
-The repository has passing unit and functional tests, publication wiring via
-`com.gradle.plugin-publish` 2.1.1, and a verified local staged artifact that a
-fresh external consumer can apply without any repo-local shortcuts.
+- GitHub release: [`v0.1.2`](https://github.com/adriandleon/kenvy/releases/tag/v0.1.2)
+- Release name: `0.1.2`
+- GitHub published time: `2026-05-27T13:14:41Z`
+- Gradle Plugin Portal version: `0.1.2`
+- Portal created date: `27 May 2026`
+- Portal plugin ID: `io.github.adriandleon.kenvy`
+- Portal install snippet:
 
-The **Test gate** and **Consumer smoke gate** pass for local staged validation.
-The **Publication gate** passes for local Maven staging only. Public Gradle
-Plugin Portal release remains blocked until Portal credentials
-(`GRADLE_PUBLISH_KEY` / `GRADLE_PUBLISH_SECRET`) are supplied and the final
-publish command succeeds.
+```kotlin
+plugins {
+    id("io.github.adriandleon.kenvy") version "0.1.2"
+}
+```
 
-<!-- prettier-ignore -->
-> [!NOTE]
-> `publishToMavenLocal` and the external consumer smoke test pass as of
-> 2026-05-09. Re-run `publishPlugins --validate-only` after every metadata
-> change before public Portal publication.
+- Latest successful Release workflow run:
+  [`26513369161`](https://github.com/adriandleon/kenvy/actions/runs/26513369161)
+- Workflow release tag: `v0.1.2`
+- Workflow result: `success`
+- Workflow started: `2026-05-27T13:14:44Z`
+- Workflow completed: `2026-05-27T13:21:32Z`
 
-## Test gate — blocking
+Normal consumers should install the latest verified Gradle Plugin Portal
+version. If GitHub Releases and the Portal temporarily differ, document both
+versions here and keep public install docs pointed at the version that resolves
+from the Portal.
+
+## Test gate
 
 Run these commands from the repository root and keep the command output as
 release evidence.
@@ -32,172 +42,146 @@ release evidence.
 ./gradlew :kenvy-plugin:test :kenvy-plugin:functionalTest
 ```
 
-This single command covers:
-
-- Unit tests for type-safe code generation, example generation, merge logic,
-  hierarchical resolution, sensitive-value masking, naming validation, and
-  external provider timeout handling
-- Functional tests for `generateKenvy`, `generateKenvyExample`, `mergeKenvy`,
-  Android bridge, iOS bridge, Git ignore diagnostics, Gradle isolation and
-  Configuration Cache compatibility, and the performance baseline
+This single command covers unit tests for generation, example output, merge
+logic, hierarchical resolution, sensitive-value masking, naming validation, and
+external provider timeout handling. It also covers functional tests for
+`generateKenvy`, `generateKenvyExample`, `mergeKenvy`, Android bridge, iOS
+bridge, Git ignore diagnostics, Gradle isolation, Configuration Cache
+compatibility, and the performance baseline.
 
 **Gate passes when:** the build succeeds with no failing unit or functional
-tests. Record the full build output.
+tests and the output is preserved.
 
-**Gate fails when:** any test fails, the build exits non-zero, or the output
-is not preserved as release evidence.
+## Documentation gate
 
-## Documentation gate — blocking
+Verify public docs before every release so the repository does not ship
+contradictory install or runtime behavior.
 
-Verify public docs before release so the project does not ship behavior that
-contradicts the test suite.
-
-Run this scan from the repository root and record the output:
+Run these scans from the repository root and record the output:
 
 ```sh
-rg -n "publication|Plugin Portal|Maven Central|staged|smoke|wizard|provider|gitignore|cacheGeneratedOutput|generateKenvy|generateKenvyExample|mergeKenvy" README.md docs
+rg -n "not yet on|not yet resolve|local staged|mavenLocal|publishToMavenLocal|Portal release remains blocked|0\\.1\\.1-SNAPSHOT|0\\.1\\.0" README.md docs agent-skills kenvy-plugin/build.gradle.kts
+rg -n "KENVY_PUBLIC_VERSION" .github/workflows/ci.yml
+rg -n "publication|Plugin Portal|Maven Central|staged|smoke|provider|gitignore|cacheGeneratedOutput|generateKenvy|generateKenvyExample|mergeKenvy" README.md docs
 ```
 
-Review each match to confirm it is consistent with tested behavior and with the
-limitations page. Then verify the following:
+The second scan surfaces the version pinned in CI so you can confirm it matches the Portal version before merging.
 
-- `README.md` explains what Kenvy does, how to install it, and how to generate
-  the first contract
-- `docs/getting-started.md` matches the current plugin DSL and task names
-- `docs/examples.md` matches tested Android, iOS, and shared use cases
-- `docs/known-limitations.md` documents current deferred items honestly
-- Sensitive-value behavior, `.gitignore` checks, and task-time diagnostics are
-  explained in user-facing language
-- Generated Kotlin naming behavior is documented clearly: contract keys stay
-  canonical, generated accessors default to lower camel case, and the
-  `generatedPropertyNameStyle` compatibility path is explained
-- All relative links among `README.md` and `docs/*.md` resolve to real files
+Review each match to confirm it is current, intentional, and consistent with
+the tested behavior. Then verify:
 
-**Gate passes when:** the scan output shows no doc contradicting tested
-behavior, and every relative link resolves. Record the scan command and output.
+- `README.md` explains the supported Portal install path and current version.
+- `docs/getting-started.md` matches the current plugins DSL and task names.
+- `docs/examples.md` uses the documented public plugin version for normal
+  consumers.
+- `docs/known-limitations.md` documents current MVP boundaries without claiming
+  the Portal plugin is unavailable.
+- `agent-skills/kenvy` directs normal consumers to the Portal version and keeps
+  local Maven staging only as a maintainer fallback.
+- All relative links among `README.md`, `docs/*.md`, and
+  `agent-skills/kenvy/**/*.md` resolve to real files.
 
-**Gate fails when:** any public doc implies publication is available, implies
-unsupported diagnostics timing, or contradicts tested task names or behaviors.
+**Gate passes when:** the scans show no stale release-state text and every
+relative link resolves.
 
-## Publication gate — partial pass (local staged)
+## Publication gate
 
-`kenvy-plugin/build.gradle.kts` now applies `com.gradle.plugin-publish` 2.1.1,
-which automatically applies `maven-publish`. Publication metadata is configured:
+`kenvy-plugin/build.gradle.kts` applies `com.gradle.plugin-publish` 2.1.1,
+which automatically applies `maven-publish`. Publication metadata is configured
+as follows:
 
 - Group: `io.github.adriandleon.kenvy`
 - Artifact: `kenvy-plugin`
-- Version: `0.1.1-SNAPSHOT` by default, or the value of
-  `-PkenvyVersion=<version>` during release
+- Development version default: `0.1.3-SNAPSHOT`
+- Release version override: `-PkenvyVersion=<version>`
 - Plugin ID: `io.github.adriandleon.kenvy`
 - Repository: `https://github.com/adriandleon/kenvy`
 - Gradle feature compatibility: Configuration Cache supported
 
-**Local staged publication command (verified 2026-05-09):**
+Run Portal validation before public publication:
 
 ```sh
-./gradlew :kenvy-plugin:publishToMavenLocal
+./gradlew :kenvy-plugin:publishPlugins --validate-only -PkenvyVersion=<version>
 ```
-
-This produces the implementation JAR and the Gradle plugin marker artifact:
-
-```
-~/.m2/repository/io/github/adriandleon/kenvy/kenvy-plugin/0.1.0/
-~/.m2/repository/io/github/adriandleon/kenvy/io.github.adriandleon.kenvy.gradle.plugin/0.1.0/
-```
-
-**Gradle Plugin Portal validation command:**
-
-```sh
-./gradlew :kenvy-plugin:publishPlugins --validate-only
-```
-
-Run this command before public publication and keep the output as release
-evidence.
-
-**Credentials required for Portal publication (not committed):**
-
-Read from Gradle properties or environment variables:
-
-```properties
-# ~/.gradle/gradle.properties
-gradle.publish.key=<your-key>
-gradle.publish.secret=<your-secret>
-```
-
-Or via environment: `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET`.
-
-**Signing (opt-in):** Configure `signing.key` and `signing.password` in
-`~/.gradle/gradle.properties`, or set `SIGNING_KEY` and `SIGNING_PASSWORD`
-environment variables if you want signed Portal artifacts. Not required for
-`publishToMavenLocal`.
-
-**Gate passes for local Maven staging.** Public Portal release is still blocked
-by missing Portal credentials and the final publish command.
-
-## Automated release workflow
 
 The public repository includes a GitHub Actions release workflow that publishes
-the Gradle plugin when you publish a GitHub Release. The release tag must start
+the Gradle plugin when a GitHub Release is published. The release tag must start
 with `v`. The workflow strips the leading `v` and passes the remaining version
-to Gradle with `-PkenvyVersion=<version>`. For example, tag `v0.1.0`
-publishes version `0.1.0`.
+to Gradle with `-PkenvyVersion=<version>`.
 
-Before creating the GitHub Release, configure the `release` GitHub environment
+Before creating a GitHub Release, configure the `release` GitHub environment
 with these secrets:
 
 - `GRADLE_PUBLISH_KEY`
 - `GRADLE_PUBLISH_SECRET`
 
-The workflow checks out the release tag, validates the tag format, runs the full
-test gate on macOS with the release version, runs
-`publishPlugins --validate-only`, and then runs `publishPlugins`.
+Signing is optional and activated only when in-memory PGP credentials are
+present through `signing.key` / `signing.password` Gradle properties or the
+`SIGNING_KEY` / `SIGNING_PASSWORD` environment variables.
 
-## Consumer smoke gate — passing
+Maintainers may still use local Maven staging for development fallback:
 
-Verified 2026-05-09 with a fresh project outside this repository using no
-`withPluginClasspath()`, `includeBuild`, or source checkout shortcuts.
-
-**Smoke project structure:**
-
-```
-kenvy-consumer-smoke-20260509/
-├── settings.gradle.kts   # pluginManagement { repositories { mavenLocal() … } }
-├── build.gradle.kts      # id("io.github.adriandleon.kenvy") version "0.1.0"
-└── kenvy.toml            # [properties.base_url] type = "String" …
+```sh
+./gradlew :kenvy-plugin:publishToMavenLocal -PkenvyVersion=<version>
 ```
 
-**Commands run:**
+Do not present local staging as the normal consumer install path in public docs.
+
+## Public consumer smoke gate
+
+Run a fresh consumer smoke against the documented public Portal version:
+
+```sh
+KENVY_PUBLIC_VERSION=0.1.2 ./scripts/public-consumer-smoke.sh
+```
+
+The script creates a project outside the repository checkout, configures only
+public repositories, applies:
+
+```kotlin
+plugins {
+    id("org.jetbrains.kotlin.multiplatform") version "2.1.20"
+    id("io.github.adriandleon.kenvy") version "0.1.2"
+}
+```
+
+and runs:
 
 ```sh
 ./gradlew generateKenvy generateKenvyExample compileKotlinJvm
 ```
 
-**Verified outputs:**
+The smoke project must not use `mavenLocal()`, `includeBuild`,
+`withPluginClasspath()`, or locally published artifacts. It verifies:
 
-- `build/generated/kenvy/commonMain/kotlin/com/example/smoke/Kenvy.kt` exists
-- `local.properties.example` exists with correct property scaffolding
-- `compileKotlinJvm` succeeds — consumer code compiles against the generated API
-- `BUILD SUCCESSFUL` with no TestKit or classpath shortcuts
+- `build/generated/kenvy/commonMain/kotlin/com/example/smoke/Kenvy.kt` exists.
+- `local.properties.example` exists.
+- `compileKotlinJvm` succeeds against the generated API.
 
-**Gate passes for local staged artifact.** Re-run the smoke project after
-Portal publication using the public plugin coordinate.
+Record the exact `KENVY_PUBLIC_VERSION`, temp project path, Gradle command, and
+success output for release evidence.
 
 ## Release evidence to preserve
 
-For each passing gate, keep the following as a permanent release record:
+For each release, keep these records:
 
-- **Test gate:** full output of `./gradlew :kenvy-plugin:test :kenvy-plugin:functionalTest`
-- **Docs gate:** full output of the `rg` scan and list of link checks performed
-- **Publication gate:** dry-run or staged publish command and output; any
-  failures or waivers and their justification
-- **Consumer smoke gate:** smoke project steps, commands run, generated file
-  paths confirmed, and task output from `generateKenvy` and `generateKenvyExample`
+- **GitHub release:** tag, name, URL, and publish time.
+- **Gradle Plugin Portal:** latest version, created date, plugin ID, and install
+  snippet.
+- **Release workflow:** run URL, run ID, tag, status, start time, and completion
+  time.
+- **Test gate:** full output of
+  `./gradlew :kenvy-plugin:test :kenvy-plugin:functionalTest`.
+- **Docs gate:** stale-text scan output and link-check result.
+- **Publication gate:** Portal validation output and publish workflow result.
+- **Consumer smoke gate:** script command, generated paths confirmed, and
+  Gradle output.
 
 ## Migration note for generated property naming
 
-Generated Kotlin property names now default to lower camel case. For example,
-`api_key` becomes `apiKey`, `retry_count` becomes `retryCount`, and `timeout_ms`
-becomes `timeoutMs` in generated Kotlin source.
+Generated Kotlin property names default to lower camel case. For example,
+`api_key` becomes `apiKey`, `retry_count` becomes `retryCount`, and
+`timeout_ms` becomes `timeoutMs` in generated Kotlin source.
 
 This does not change contract keys in `kenvy.toml`, `[overrides.*]`,
 `local.properties`, `local.properties.example`, `mergeKenvy`, or
@@ -221,39 +205,17 @@ publishing:
 - Confirm whether `EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING` is still the
   correct generated-source suppression key.
 - Remove the generated suppression if Kotlin no longer emits the warning.
-- Re-run KMP functional tests that compile generated common and platform sources.
+- Re-run KMP functional tests that compile generated common and platform
+  sources.
 
 ## Go or no-go criteria
 
-Use these criteria to make the release decision repeatable.
-
-- **Go:** test gate passes, documentation gate passes, local staged publication
-  passes, public Portal validation passes for a fixed version, and a fresh
-  consumer smoke project succeeds.
+- **Go:** test gate passes, documentation gate passes, Portal validation passes,
+  the Release workflow publishes successfully, the Plugin Portal shows the
+  expected version, and the public consumer smoke succeeds.
 - **No-go:** any blocking gate fails, any public doc contradicts tested
-  behavior, publication remains unconfigured, or release evidence is missing
-  for any gate.
+  behavior, GitHub and Portal version drift is undocumented, or release evidence
+  is missing for any gate.
 
-There is no release if a blocking gate is waived without documented justification.
-
-## Non-blocking advisory checks
-
-These checks improve quality but do not block the release by themselves.
-
-- Confirm Kotlin version and Gradle runtime target in public docs match the
-  versions used in the test suite
-- Confirm AGP version mentioned for Android examples is the version exercised
-  in functional tests
-- Review the go/no-go decision with at least one other person familiar with the
-  tested behavior before publishing
-
-## Next steps
-
-Local staged validation is complete. Before public release:
-
-1. Set `GRADLE_PUBLISH_KEY` and `GRADLE_PUBLISH_SECRET` (do not commit these).
-2. Create and publish a GitHub Release with a semantic version tag, such as
-   `v0.1.0`.
-3. Wait for the `Release` workflow to pass.
-4. Re-run the external consumer smoke project using the Portal-published
-   coordinate to confirm end-to-end resolution.
+There is no release if a blocking gate is waived without documented
+justification.
