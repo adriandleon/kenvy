@@ -209,6 +209,7 @@ limits.
 - [Examples](docs/examples.md)
 - [Known limitations](docs/known-limitations.md)
 - [Release checklist](docs/release-checklist.md)
+- [AI agent skill](docs/ai-agent-skill.md)
 
 ## Current release status
 
