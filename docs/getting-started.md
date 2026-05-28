@@ -5,11 +5,11 @@ your first contract, generate code, and understand where diagnostics appear.
 
 ## Before you begin
 
-This repository currently verifies Kenvy with:
-
-- Kotlin `2.1.20`
-- Java 17 as the Gradle runtime target
-- AGP `8.5.2` for the Android examples in this repo only
+Before changing Kotlin, Gradle, AGP, Java, Android target wiring, or iOS target
+wiring, check [toolchain compatibility](toolchain-compatibility.md). The
+repository baseline uses Kotlin `2.1.20`, Gradle `9.4.1`, Java 17, and AGP
+`8.5.2`; modern Kotlin, Android-KMP, iOS, and Java toolchain probes are listed
+there with exact validated patch versions.
 
 Kenvy generates Kotlin source during the build. You need a valid package name
 for the generated code, either from your project `group` or from

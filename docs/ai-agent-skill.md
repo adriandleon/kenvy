@@ -37,7 +37,8 @@ and source before product claims, then routes them to focused references for:
 - Adding, updating, renaming, and removing properties
 - Handling `local.properties`, scoped `KENVY_` environment variables, CI, and
   secrets safely
-- Migrating from BuildKonfig and ad hoc configuration patterns
+- Migrating from legacy generated configuration and ad hoc configuration
+  patterns
 
 The human-facing product docs remain the source of truth for runtime behavior,
 release state, examples, and known limitations.

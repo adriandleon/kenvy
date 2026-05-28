@@ -27,9 +27,11 @@ You need a Gradle build that can apply the plugin and a Kotlin Multiplatform
 project if you want automatic source-set wiring for `commonMain` and platform
 targets.
 
-- Kotlin: `2.1.20`
-- Gradle runtime target: Java 17
-- Android examples in this repo use AGP `8.5.2`
+Kenvy's verified toolchains are documented in
+[toolchain compatibility](docs/toolchain-compatibility.md). The current
+development baseline uses Kotlin `2.1.20`, Gradle `9.4.1`, Java 17, and AGP
+`8.5.2` for legacy Android examples. Modern Kotlin, Android-KMP, iOS, and Java
+toolchain probes are validated separately in the compatibility matrix.
 
 Kenvy uses your project `group` as the default package name for generated code.
 Set `group` to a valid Kotlin package, or configure `kenvy.packageName`

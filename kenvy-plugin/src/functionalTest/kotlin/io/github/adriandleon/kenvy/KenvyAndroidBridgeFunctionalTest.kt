@@ -14,15 +14,6 @@ class KenvyAndroidBridgeFunctionalTest {
     @TempDir
     lateinit var projectDir: File
 
-    private fun assertNoExpectActualBetaWarning(output: String) {
-        assertFalse(output.contains("expect/actual") && output.contains("Beta"),
-            "Kenvy generated sources must not emit expect/actual beta warning noise")
-        assertFalse(output.contains("expect/actual for classes"),
-            "Kenvy generated sources must not emit expect/actual classifier warning (alternate phrasing)")
-        assertFalse(output.contains("-Xexpect-actual-classes"), "Kenvy must not require consumer compiler flag suppression")
-        assertFalse(output.contains("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING"), "Suppression id must not leak into Gradle output")
-    }
-
     private fun setupAndroidProject(
         tomlContent: String,
         androidSourceContent: String,
@@ -161,7 +152,7 @@ class KenvyAndroidBridgeFunctionalTest {
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyAndroid")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvy")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":compileDebugKotlinAndroid")?.outcome)
-        assertNoExpectActualBetaWarning(result.output)
+        result.assertNoExpectActualBetaWarning()
 
         val commonGenerated = File(projectDir, "build/generated/kenvy/commonMain/kotlin/com/example/test/AppConfig.kt")
         assertTrue(commonGenerated.exists())
@@ -209,7 +200,7 @@ class KenvyAndroidBridgeFunctionalTest {
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyJvm")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":compileKotlinJvm")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":compileDebugKotlinAndroid")?.outcome)
-        assertNoExpectActualBetaWarning(result.output)
+        result.assertNoExpectActualBetaWarning()
 
         val commonGenerated = File(projectDir, "build/generated/kenvy/commonMain/kotlin/com/example/test/Kenvy.kt")
         assertTrue(commonGenerated.readText().contains("expect object Kenvy"))
@@ -246,7 +237,7 @@ class KenvyAndroidBridgeFunctionalTest {
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateKenvyAndroid")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":compileDebugKotlinAndroid")?.outcome)
-        assertNoExpectActualBetaWarning(result.output)
+        result.assertNoExpectActualBetaWarning()
 
         val generated = File(projectDir, "build/generated/kenvy/androidMain/kotlin/com/example/test/Kenvy.kt")
         assertTrue(generated.readText().contains("actual val apiKey: String = \"android-debug\""))
@@ -287,7 +278,7 @@ class KenvyAndroidBridgeFunctionalTest {
 
         assertEquals(TaskOutcome.SUCCESS, debugResult.task(":generateKenvyAndroid")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, debugResult.task(":compileDebugKotlinAndroid")?.outcome)
-        assertNoExpectActualBetaWarning(debugResult.output)
+        debugResult.assertNoExpectActualBetaWarning()
 
         val generated = File(projectDir, "build/generated/kenvy/androidMain/kotlin/com/example/test/Kenvy.kt")
         assertTrue(generated.readText().contains("actual val apiKey: String = \"android-debug-local\""))
@@ -317,7 +308,7 @@ class KenvyAndroidBridgeFunctionalTest {
 
         assertEquals(TaskOutcome.SUCCESS, releaseResult.task(":generateKenvyAndroid")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, releaseResult.task(":assembleRelease")?.outcome)
-        assertNoExpectActualBetaWarning(releaseResult.output)
+        releaseResult.assertNoExpectActualBetaWarning()
         assertTrue(generated.readText().contains("actual val apiKey: String = \"android-release-local\""))
         assertTrue(generated.readText().contains("actual object Kenvy"))
     }

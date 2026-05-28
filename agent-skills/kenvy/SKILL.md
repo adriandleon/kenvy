@@ -1,6 +1,6 @@
 ---
 name: kenvy
-description: Helps AI agents install, configure, troubleshoot, manage properties, safely handle secrets, search docs, and migrate to the Kenvy Gradle plugin for Kotlin Multiplatform, KMP, and Compose Multiplatform projects, including kenvy.toml, local.properties, KENVY_ environment variables, CI, property add/update/remove flows, and BuildKonfig migration.
+description: Helps AI agents install, configure, troubleshoot, manage properties, safely handle secrets, search docs, and migrate to the Kenvy Gradle plugin for Kotlin Multiplatform, KMP, and Compose Multiplatform projects, including kenvy.toml, local.properties, KENVY_ environment variables, CI, property add/update/remove flows, BuildKonfig migration, and legacy generated configuration migration.
 license: Apache-2.0
 ---
 
@@ -49,7 +49,7 @@ Capture these facts first:
 - KMP targets, Android variants, and iOS variant strategy.
 - The module and path that should own `kenvy.toml`.
 - Current Kenvy package/object names and generated property naming style.
-- Existing `BuildConfig`, `resValue`, BuildKonfig, constants,
+- Existing `BuildConfig`, `resValue`, generated configuration plugins, constants,
   `local.properties`, `gradle.properties`, shell env, and CI secret patterns.
 - Whether secret files are ignored by Git.
 
