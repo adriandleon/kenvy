@@ -23,6 +23,11 @@ consumer smoke evidence. Maintainers may use local Maven staging for plugin
 development fallback, but it is not the normal install path for external
 consumers.
 
+Before changing Kotlin, Gradle, AGP, Java, Android plugin IDs, Android target
+declarations, or iOS source-set wiring, inspect the consumer's existing
+toolchain and consult `docs/toolchain-compatibility.md`. Preserve existing
+versions unless the matrix and the user's request support changing them.
+
 ## Module ownership
 
 Find the module that should own the contract:
@@ -57,7 +62,8 @@ Kenvy writes shared generated source under
 Use this flow when Kenvy must generate `expect`/`actual` objects:
 
 1. Inspect declared KMP targets before editing.
-2. Keep existing Android and iOS target declarations.
+2. Keep existing Android and iOS target declarations unless the compatibility
+   matrix requires a documented Android-KMP plugin shape.
 3. Use `[overrides.android]` and `[overrides.android.<variant>]` for Android
    values.
 4. Use the canonical `[overrides.ios]` key for every iOS architecture target.

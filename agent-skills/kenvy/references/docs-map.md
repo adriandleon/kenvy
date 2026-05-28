@@ -8,6 +8,8 @@ as product documentation.
 
 - `README.md`: product overview, requirements, quick start, task names,
   resolution order, platform keys, and current release status.
+- `docs/toolchain-compatibility.md`: exact Kotlin, Gradle, AGP, Java, Android,
+  iOS, CI, and unsupported-combination evidence.
 - `docs/getting-started.md`: install steps, `kenvy.toml` schema, extension
   defaults, local values, overrides, generated names, secret safety,
   diagnostics, and `mergeKenvy`.
@@ -51,6 +53,7 @@ rg -n "generateKenvy|mergeKenvy|generateKenvyExample" README.md docs kenvy-plugi
 rg -n "localPropertiesFiles|legacyUnprefixed|generatedPropertyNameStyle|platform|variant" README.md docs kenvy-plugin/src
 rg -n "KENVY_|toScopedEnvVarNames|api_key.android|overrides.android" README.md docs kenvy-plugin/src
 rg -n "Plugin Portal|public consumer smoke|KENVY_PUBLIC_VERSION|publishToMavenLocal" README.md docs agent-skills
+rg -n "Kotlin|AGP|Android Gradle|Gradle|Java|JDK|toolchain|compatibility" README.md docs agent-skills .github kenvy-plugin/src scripts gradle
 ```
 
 When docs and source appear to disagree, treat source plus tests as the

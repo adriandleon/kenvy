@@ -304,12 +304,11 @@ name. Kenvy writes `AppConfig.kt` and exposes `AppConfig.apiKey` instead of
 
 For shared modules with a constrained public API surface, configure
 `generatedVisibility` to keep configuration types internal to the module.
-This matches BuildKonfig's default behavior of generating `internal object`.
 
 ```kotlin
 kenvy {
     packageName.set("com.example.config")
-    interfaceName.set("BuildKonfig")
+    interfaceName.set("AppConfig")
     generatedVisibility.set("internal")
 }
 ```
@@ -317,7 +316,7 @@ kenvy {
 Kenvy generates:
 
 ```kotlin
-internal object BuildKonfig {
+internal object AppConfig {
     val apiKey: String = "value"
 }
 ```
@@ -326,10 +325,10 @@ For KMP projects with Android and iOS targets:
 
 ```kotlin
 // commonMain
-internal expect object BuildKonfig { val apiKey: String }
+internal expect object AppConfig { val apiKey: String }
 
 // androidMain, iosMain
-internal actual object BuildKonfig { actual val apiKey: String = "value" }
+internal actual object AppConfig { actual val apiKey: String = "value" }
 ```
 
 Internal declarations compile from any source in the same Gradle module.

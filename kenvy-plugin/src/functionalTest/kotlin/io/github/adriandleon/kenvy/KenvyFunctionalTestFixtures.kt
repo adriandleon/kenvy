@@ -124,3 +124,19 @@ internal fun BuildResult.assertNoIsolationOrConfigurationCacheProblems() {
         "Build used configuration-cache-incompatible logic.\n$output"
     )
 }
+
+internal fun BuildResult.assertNoExpectActualBetaWarning() {
+    assertFalse(
+        output.contains("expect/actual classes are in Beta") ||
+            output.contains("expect/actual for classes"),
+        "Kenvy generated sources must not emit expect/actual beta/classifier warning noise.\n$output"
+    )
+    assertFalse(
+        output.contains("-Xexpect-actual-classes"),
+        "Kenvy must not require consumer compiler flag suppression.\n$output"
+    )
+    assertFalse(
+        output.contains("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING"),
+        "Suppression id must not leak into Gradle output.\n$output"
+    )
+}

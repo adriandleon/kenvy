@@ -3,6 +3,11 @@
 Use this reference when creating or changing `kenvy.toml` or the `kenvy { ... }`
 Gradle extension.
 
+Do not change Kotlin, Gradle, AGP, Java, Android target wiring, or iOS
+source-set wiring from this reference alone. Consult
+`docs/toolchain-compatibility.md` first and preserve the consumer project's
+existing toolchain unless the requested change is matrix-backed.
+
 ## Contract file
 
 By default, Kenvy reads `kenvy.toml` from the Gradle project directory where

@@ -208,6 +208,25 @@ publishing:
 - Re-run KMP functional tests that compile generated common and platform
   sources.
 
+## Toolchain compatibility checkpoint
+
+Before publishing, rerun the exact compatibility matrix scenarios documented in
+`docs/toolchain-compatibility.md` and record the Kotlin, Gradle, AGP, Java
+runtime, Java toolchain, Android plugin shape, iOS target shape, command, and CI
+run evidence.
+
+Required local or CI entrypoints:
+
+```sh
+./scripts/compatibility-matrix.sh android-baseline
+./scripts/compatibility-matrix.sh android-modern
+./scripts/compatibility-matrix.sh ios-modern
+./scripts/compatibility-matrix.sh jvm-modern
+```
+
+If a toolchain cannot be validated, update the matrix with the exact failing
+constraint and the recommended fallback before release.
+
 ## Go or no-go criteria
 
 - **Go:** test gate passes, documentation gate passes, Portal validation passes,

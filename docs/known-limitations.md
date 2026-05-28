@@ -22,6 +22,20 @@ fallbacks, but public consumers should follow the Portal install path. See
 [release checklist](release-checklist.md) for the release evidence process and
 for handling temporary GitHub Release versus Portal version drift.
 
+## Toolchain support is matrix-backed
+
+Kenvy does not claim broad Kotlin, Gradle, AGP, Java, Android, or iOS support
+unless the exact stack is listed in
+[toolchain compatibility](toolchain-compatibility.md). Treat the matrix as the
+source of truth before changing plugin versions, Java runtimes, Java
+toolchains, Android plugin IDs, Android target declarations, or iOS source-set
+wiring.
+
+AGP `9.x` Android KMP library modules use the Android-KMP library plugin shape
+documented in the matrix. Legacy Android build variants remain covered by the
+baseline Android fixture, but the modern Android-KMP library plugin is
+single-variant and does not imply build-type or flavor support.
+
 ## Git ignore verification is intentionally narrow
 
 Kenvy verifies that existing secret-bearing files are present in `.gitignore`,
